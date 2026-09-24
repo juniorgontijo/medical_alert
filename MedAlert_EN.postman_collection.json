@@ -1,0 +1,415 @@
+{
+  "info": {
+    "name": "MedAlert - QA Bugs",
+    "description": "Ready-to-run requests that reproduce the bugs documented in BUGS_EN.md. Import into Postman (or Insomnia/Thunder Client). Folders are organized the same way as the published bug-triage site: by the order things happen in real system usage (sign-up -> login -> patients -> nursing -> alerts -> doctor). Run 'Login - Marina (bypass)' first in folders that depend on a session — Postman keeps the cookie automatically for later calls on the same domain.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "alertId", "value": "4", "description": "Fill in with the id of a pending alert (see the response of GET /api/patients/pac2). The seed creates Roberto's critical alert with id 4 right after a reset." }
+  ],
+  "item": [
+    {
+      "name": "1 - User Sign-up",
+      "item": [
+        {
+          "name": "FEATURE-004 - Self-register as a Doctor with no validation (not a bug, see FEATURES_EN.md)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": ["pm.collectionVariables.set('doctorEmail', 'fake.doctor+' + Date.now() + '@test.com');"] }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dr. Fake Test\",\n  \"email\": \"{{doctorEmail}}\",\n  \"role\": \"doctor\",\n  \"password\": \"123456\",\n  \"confirmPassword\": \"123456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "Anyone can become a 'doctor' or 'nurse' with no credential verification at all. With no written rule requiring otherwise, this is a feature suggestion (FEATURES_EN.md), not a bug. The email is generated fresh on every send (doctorEmail variable) so you can click Send repeatedly without hitting a 409 from a stale duplicate."
+          }
+        },
+        {
+          "name": "BUG-003 - Sign-up with an invalid email/TLD",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": ["pm.collectionVariables.set('tldEmail', 'a' + Date.now() + '@a.123456');"] }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Invalid TLD Test\",\n  \"email\": \"{{tldEmail}}\",\n  \"role\": \"patient\",\n  \"password\": \"123456\",\n  \"confirmPassword\": \"123456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "The email regex accepts a purely numeric TLD / an absurd domain. The '.123456' TLD is the whole point of this test, so only the part before the @ is generated fresh each time (tldEmail variable) — the invalid domain itself never changes."
+          }
+        },
+        {
+          "name": "BUG-004 - Sign-up with emoji (name, email, and password)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": ["pm.collectionVariables.set('emojiEmail', '🫶' + Date.now() + '@🫶.com');"] }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"🫶🫶🫶🫶🫶\",\n  \"email\": \"{{emojiEmail}}\",\n  \"role\": \"patient\",\n  \"password\": \"🫶🫶🫶🫶🫶🫶\",\n  \"confirmPassword\": \"🫶🫶🫶🫶🫶🫶\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "Name, email, and password all accept emoji with no character restriction. The email still contains emoji (that's the point of the test) and just gets a fresh number attached (emojiEmail variable) so repeated runs don't collide."
+          }
+        },
+        {
+          "name": "BUG-004 - Sign-up with a spaces-only password",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": ["pm.collectionVariables.set('spacePwEmail', 'spacepassword+' + Date.now() + '@medalert.test');"] }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Space Password Test\",\n  \"email\": \"{{spacePwEmail}}\",\n  \"role\": \"patient\",\n  \"password\": \"      \",\n  \"confirmPassword\": \"      \"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "A password made of 6 blank spaces passes the 'length >= 6' check. Email generated fresh on every send (spacePwEmail variable) to avoid a duplicate-email 409 on reruns."
+          }
+        },
+        {
+          "name": "BUG-002 - Sign-up with an XSS payload in the name",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": ["pm.collectionVariables.set('xssEmail', 'xsstest+' + Date.now() + '@medalert.test');"] }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test<img src=x onerror=alert(document.cookie)>\",\n  \"email\": \"{{xssEmail}}\",\n  \"role\": \"patient\",\n  \"password\": \"123456\",\n  \"confirmPassword\": \"123456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "After running this, LOG IN with this account in the browser (a 1-character password is enough, BUG-005) and look at the header (topbar) — the alert fires there. The email is generated fresh to avoid a duplicate-email 409; to see exactly which one was used this run, check the collection's 'xssEmail' variable (click the collection name → Variables tab → Current Value column). IMPORTANT: the login screen (the <option> in the selector) is NOT a good place to test this — browsers discard tags like <img> inside <select>/<option>, so that specific spot does not execute the payload (confirmed with Cypress). The header, the sidebar, and tab titles do execute it."
+          }
+        },
+        {
+          "name": "Safe test - SQL Injection in the name (not a bug)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": ["pm.collectionVariables.set('sqlEmail', 'sqltest+' + Date.now() + '@medalert.test');"] }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test'; DROP TABLE users; --\",\n  \"email\": \"{{sqlEmail}}\",\n  \"role\": \"patient\",\n  \"password\": \"123456\",\n  \"confirmPassword\": \"123456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "better-sqlite3's prepared statements neutralize the injection — confirmation that THIS spot is safe. Email generated fresh on every send (sqlEmail variable) to avoid a duplicate-email 409."
+          }
+        },
+        {
+          "name": "Safe test - invalid role directly via the API (not a bug)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": ["pm.collectionVariables.set('roleEmail', 'invalidrole+' + Date.now() + '@medalert.test');"] }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Invalid Role Test\",\n  \"email\": \"{{roleEmail}}\",\n  \"role\": \"admin\",\n  \"password\": \"123456\",\n  \"confirmPassword\": \"123456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "Should respond 400 'Invalid role' — confirmation that this validation works. Email generated fresh on every send (roleEmail variable) to avoid a duplicate-email 409."
+          }
+        },
+        {
+          "name": "Safe test - Duplicate email is correctly rejected (not a bug)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Duplicate Email Test\",\n  \"email\": \"marina@medalert.test\",\n  \"role\": \"patient\",\n  \"password\": \"123456\",\n  \"confirmPassword\": \"123456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "Deliberately NOT randomized: marina@medalert.test is a real seed user, so this should always come back 409 'Email already registered'. This is the opposite case from the tests above — reusing the same email on purpose is the whole point here, so it stays fixed."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 - Login",
+      "item": [
+        {
+          "name": "BUG-005 - Login with a 1-character password (Marina)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"marina@medalert.test\",\n  \"password\": \"x\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Login never compares the real password, it only requires >= 1 character. Run this before the requests in folder '3 - Post-login (Patients)' to log in as Marina (patient)."
+          }
+        },
+        {
+          "name": "BUG-006 - GET directory (public, no login required)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/auth/directory",
+            "description": "This public endpoint exposes the name, role, and email of every user (patients included) with no authentication required."
+          }
+        },
+        {
+          "name": "BUG-007 - POST reset (no authentication)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/admin/reset",
+            "description": "Wipes and recreates the entire database with no login required. Also handy as the 'clean-up button' after running the IDOR/sign-up tests, to leave the system clean again before a demo."
+          }
+        },
+        {
+          "name": "GET /api/auth/me (confirms active session)",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/auth/me" }
+        },
+        {
+          "name": "POST /api/auth/logout",
+          "request": { "method": "POST", "header": [], "url": "{{baseUrl}}/api/auth/logout" }
+        }
+      ]
+    },
+    {
+      "name": "3 - Post-login (Patients)",
+      "item": [
+        {
+          "name": "GET /api/patients (normal list, Marina only)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/patients",
+            "description": "Correct behavior: logged in as Marina, it only returns herself."
+          }
+        },
+        {
+          "name": "BUG-008 - GET /api/patients/pac2 (IDOR read)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/patients/pac2",
+            "description": "Logged in as Marina (patient), reads Roberto's (pac2) full medical record, including private clinical notes."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4 - Nursing (Vitals)",
+      "item": [
+        {
+          "name": "BUG-011 - POST vitals with HR exactly at the threshold (100)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hr\": 100,\n  \"spo2\": 97,\n  \"temp\": 36.6,\n  \"sys\": 118,\n  \"dia\": 76\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/patients/pac1/vitals",
+            "description": "Marina's hr_high is 100. With HR exactly at 100, it should NOT be silent (boundary bug: the code uses '>' instead of '>='). Check afterward with GET /api/patients/pac1."
+          }
+        },
+        {
+          "name": "BUG-010 - POST vitals with a negative HR",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hr\": -50,\n  \"spo2\": 97,\n  \"temp\": 36.6,\n  \"sys\": 118,\n  \"dia\": 76\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/patients/pac1/vitals",
+            "description": "No physiological range validation — a negative HR is accepted and stored."
+          }
+        },
+        {
+          "name": "BUG-009 - POST vitals with a real Fahrenheit temperature (98)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hr\": 75,\n  \"spo2\": 97,\n  \"temp\": 98,\n  \"sys\": 118,\n  \"dia\": 76\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/patients/pac1/vitals",
+            "description": "98 is a normal body temperature in Fahrenheit. The system compares it directly against the 37.8 threshold (Celsius) and wrongly fires a fever alert. Run it twice in a row to also see BUG-012 (duplicate alerts)."
+          }
+        },
+        {
+          "name": "FEATURE-005 - POST vitals with an absurd diastolic value (200) - not a bug, see FEATURES_EN.md",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hr\": 75,\n  \"spo2\": 97,\n  \"temp\": 36.6,\n  \"sys\": 118,\n  \"dia\": 200\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/patients/pac1/vitals",
+            "description": "The response comes back with 'newAlerts: 0' even with a 200 mmHg diastolic reading — there is no threshold or rule for this field anywhere in the system. The official challenge specification defines no alert rule for diastolic pressure (only HR, SpO2, temperature, and systolic), so by the challenge's own criterion this is not a bug — it's a feature suggestion (FEATURES_EN.md, FEATURE-005)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "5 - Alert Management",
+      "item": [
+        {
+          "name": "BUG-013 - GET pac2 (see the critical alert stuck in 'pending')",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/patients/pac2",
+            "description": "The seeded critical alert (SpO2 91%) is already past the 15-minute auto-escalation rule, but its 'status' field is still 'pending' — the auto-escalation function is never called."
+          }
+        },
+        {
+          "name": "BUG-014 - POST acknowledge (run it twice with the same id)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/alerts/{{alertId}}/acknowledge",
+            "description": "Fill the {{alertId}} variable with a pending alert's id (see the patient's GET response). Run this exact request twice in a row: the second time overwrites 'acknowledged_by'/'acknowledged_at' with no warning at all that it had already been acknowledged."
+          }
+        },
+        {
+          "name": "POST escalate",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/alerts/{{alertId}}/escalate"
+          }
+        },
+        {
+          "name": "BUG-015 - Step 1: Acknowledge a pending alert",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/alerts/{{alertId}}/acknowledge",
+            "description": "Run the 3 BUG-015 requests in order: 1 (this one), 2, 3. After each one, check the alert with GET /api/patients/pac1 to see the status and acknowledgedBy/acknowledgedAt change (or not)."
+          }
+        },
+        {
+          "name": "BUG-015 - Step 2: Escalate the SAME already-acknowledged alert",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/alerts/{{alertId}}/escalate",
+            "description": "The status flips to 'escalated', but the acknowledgedBy/acknowledgedAt from step 1 are still there, never cleared — an 'escalated' alert that still shows it was 'acknowledged by So-and-so'."
+          }
+        },
+        {
+          "name": "BUG-015 - Step 3: Acknowledge again the alert that was escalated",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/alerts/{{alertId}}/acknowledge",
+            "description": "The status goes back to 'acknowledged', as if the escalation from step 2 never happened. There is no state machine or transition lock between acknowledge/escalate."
+          }
+        }
+      ]
+    },
+    {
+      "name": "6 - Doctor (Thresholds / Prescription / Discharge)",
+      "item": [
+        {
+          "name": "BUG-018 - PUT thresholds for Roberto (IDOR write)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hrHigh\": 999,\n  \"hrLow\": 1,\n  \"spo2Low\": 1,\n  \"tempHigh\": 999,\n  \"sysHigh\": 999\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/patients/pac2/thresholds",
+            "description": "Marina (patient) changes another patient's alert thresholds."
+          }
+        },
+        {
+          "name": "BUG-018 - POST fake vitals into Roberto's record (IDOR write)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hr\": -999,\n  \"spo2\": 200,\n  \"temp\": 40,\n  \"sys\": 300,\n  \"dia\": 200\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/patients/pac2/vitals",
+            "description": "Marina (patient) logs fabricated vital signs into Roberto's medical record. Filed under BUG-018 alongside the other write endpoints (thresholds/prescriptions/discharge) since it's the same missing-ownership-check root cause, even though this specific call targets the vitals endpoint."
+          }
+        },
+        {
+          "name": "BUG-018 - POST discharge for Roberto (IDOR write)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/patients/pac2/discharge",
+            "description": "Marina (a regular patient) discharges Roberto. After demonstrating this, run 'BUG-007 - POST reset' (folder 2 - Login)."
+          }
+        },
+        {
+          "name": "BUG-019 - POST prescription with no valid patient",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"drug\": \"Ibuprofen\",\n  \"dose\": \"400mg\",\n  \"freq\": \"every 8h\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/patients/undefined/prescriptions",
+            "description": "Responds 201 'success' even though nothing is saved, because the :id 'undefined' doesn't exist."
+          }
+        }
+      ]
+    }
+  ]
+}

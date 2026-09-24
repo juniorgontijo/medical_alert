@@ -1,0 +1,89 @@
+name: Cypress QA Suite
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  happy-path:
+    name: Happy-path flows (gates the build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - run: npm ci
+
+      - name: Reset database to a known state
+        run: npm run reset-db
+
+      - name: Start MedAlert server
+        run: npm start &
+
+      - name: Wait for the server to respond
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000 > /dev/null && exit 0
+            sleep 1
+          done
+          echo "Server never came up" && exit 1
+
+      - name: Run the 6 happy-path specs
+        run: npx cypress run --config excludeSpecPattern="**/*bug*.cy.js"
+
+  bug-suite:
+    name: Bug-proof suite (failures are expected, informational only)
+    runs-on: ubuntu-latest
+    needs: happy-path
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - run: npm ci
+
+      - name: Reset database to a known state
+        run: npm run reset-db
+
+      - name: Start MedAlert server
+        run: npm start &
+
+      - name: Wait for the server to respond
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000 > /dev/null && exit 0
+            sleep 1
+          done
+          echo "Server never came up" && exit 1
+
+      # This suite is the unhappy path on purpose: every red test here is a
+      # reproducible bug (see BUGS_EN.md). It must never fail the pipeline —
+      # only the happy-path job above gates the build.
+      - name: Run the bug-proof specs
+        continue-on-error: true
+        run: npx cypress run --spec "cypress/e2e/**/*bug*.cy.js"
+
+      - name: Upload videos (evidence, even for the expected failures)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-bug-videos
+          path: cypress/videos
+          if-no-files-found: ignore
+
+      - name: Upload failure screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-bug-screenshots
+          path: cypress/screenshots
+          if-no-files-found: ignore

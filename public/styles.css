@@ -1,0 +1,63 @@
+:root{
+  --primary:#0d6e6e;
+  --primary-dark:#095050;
+  --accent:#2f8f8f;
+  --bg:#f4f7f7;
+  --card:#ffffff;
+  --border:#dde5e5;
+  --text:#1f2b2b;
+  --muted:#6b7a7a;
+  --danger:#c0392b;
+  --warn:#e07b1f;
+  --mid:#c99a10;
+  --low:#3a7fc1;
+  --ok:#2f9e5f;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);}
+header.topbar{background:var(--primary);color:#fff;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;}
+header.topbar h1{font-size:18px;margin:0;font-weight:600;}
+header.topbar .userinfo{display:flex;align-items:center;gap:14px;font-size:14px;}
+.badge{background:#fff;color:var(--primary-dark);border-radius:20px;padding:4px 12px;font-weight:600;font-size:13px;}
+button{cursor:pointer;border:none;border-radius:6px;padding:8px 14px;font-size:14px;font-weight:600;}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-primary:hover{background:var(--primary-dark);}
+.btn-outline{background:#fff;color:var(--primary);border:1px solid var(--primary);}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-small{padding:5px 10px;font-size:12px;}
+#app{max-width:1200px;margin:0 auto;padding:0;}
+.login-wrap{max-width:420px;margin:60px auto;background:var(--card);padding:32px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.08);}
+.login-wrap h2{margin-top:0;color:var(--primary-dark);}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px;}
+.field select, .field input{width:100%;padding:9px;border:1px solid var(--border);border-radius:6px;font-size:14px;}
+.layout{display:flex;gap:20px;max-width:1200px;margin:20px auto 0;padding:0 20px;}
+.sidebar{width:260px;background:var(--card);border-radius:10px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06);height:fit-content;}
+.sidebar h3{font-size:13px;color:var(--muted);text-transform:uppercase;margin:4px 0 10px;}
+.patient-item{padding:10px;border-radius:6px;cursor:pointer;margin-bottom:6px;border:1px solid transparent;}
+.patient-item:hover{background:#eef5f5;}
+.patient-item.active{background:var(--primary);color:#fff;}
+.content{flex:1;}
+.card{background:var(--card);border-radius:10px;padding:20px;margin-bottom:18px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.card h3{margin-top:0;color:var(--primary-dark);}
+table{width:100%;border-collapse:collapse;font-size:14px;}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);}
+th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;}
+.tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);}
+.tab{padding:10px 16px;cursor:pointer;font-size:14px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary);}
+.sev{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700;color:#fff;}
+.sev-baixa{background:var(--low);}
+.sev-media{background:var(--mid);}
+.sev-alta{background:var(--warn);}
+.sev-critica{background:var(--danger);}
+.status-pill{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;background:#eee;color:#444;}
+.status-acknowledged{background:#dff3e6;color:var(--ok);}
+.status-escalated{background:#fde3da;color:var(--danger);}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.vitals-form input{padding:8px;border:1px solid var(--border);border-radius:6px;width:100%;}
+.vitals-form label{font-size:12px;color:var(--muted);display:block;margin-bottom:3px;}
+.muted{color:var(--muted);font-size:13px;}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--primary-dark);color:#fff;padding:12px 18px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.2);font-size:14px;display:none;z-index:999;}
+.empty{padding:30px;text-align:center;color:var(--muted);}
+.page-wrap{max-width:900px;margin:20px auto;padding:0 20px;}

@@ -1,0 +1,405 @@
+{
+  "info": {
+    "name": "MedAlert - Bugs de QA",
+    "description": "Requisições prontas para reproduzir os bugs documentados em BUGS.md. Importe no Postman (ou Insomnia/Thunder Client). Rode 'Login - Marina (bypass)' primeiro nas pastas que dependem de sessão — o Postman guarda o cookie automaticamente para as próximas chamadas no mesmo domínio.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "alertId", "value": "4", "description": "Preencha com o id de um alerta pendente (ver resposta de GET /api/patients/pac2). O seed cria o alerta crítico do Roberto com id 4 logo após um reset." }
+  ],
+  "item": [
+    {
+      "name": "01 - Auth",
+      "item": [
+        {
+          "name": "BUG-005 - Login com senha de 1 caractere (Marina)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"marina@medalert.test\",\n  \"password\": \"x\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Login não compara a senha real, só exige >= 1 caractere. Rode este antes das requisições da pasta '02 - Patients (IDOR)' para logar como Marina (paciente)."
+          }
+        },
+        {
+          "name": "BUG-006 - GET directory (público, sem login)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/auth/directory",
+            "description": "Endpoint público expõe nome, papel e e-mail de todos os usuários (inclusive pacientes) sem exigir autenticação."
+          }
+        },
+        {
+          "name": "FEATURE-004 - Autocadastro como Médico(a) sem validação (não é bug, ver FEATURES.md)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": ["pm.collectionVariables.set('doctorEmail', 'medico.falso+' + Date.now() + '@teste.com');"] }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dr. Falso Teste\",\n  \"email\": \"{{doctorEmail}}\",\n  \"role\": \"doctor\",\n  \"password\": \"123456\",\n  \"confirmPassword\": \"123456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "Qualquer um pode virar 'médico' ou 'enfermeiro' sem nenhuma validação de credencial. Sem regra escrita exigindo o contrário, isso é sugestão de feature (FEATURES.md), não bug. E-mail gerado na hora (variável doctorEmail) pra poder clicar Send várias vezes sem tomar 409 de e-mail duplicado."
+          }
+        },
+        {
+          "name": "BUG-003 - Cadastro com e-mail/TLD inválido",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": ["pm.collectionVariables.set('tldEmail', 'a' + Date.now() + '@a.123456');"] }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Teste TLD Invalido\",\n  \"email\": \"{{tldEmail}}\",\n  \"role\": \"patient\",\n  \"password\": \"123456\",\n  \"confirmPassword\": \"123456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "Regex de e-mail aceita TLD puramente numérico / domínio absurdo. O TLD '.123456' é o ponto do teste, então só a parte antes do @ é gerada na hora (variável tldEmail) — o domínio inválido continua sempre igual."
+          }
+        },
+        {
+          "name": "BUG-004 - Cadastro com emoji (nome, e-mail e senha)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": ["pm.collectionVariables.set('emojiEmail', '🫶' + Date.now() + '@🫶.com');"] }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"🫶🫶🫶🫶🫶\",\n  \"email\": \"{{emojiEmail}}\",\n  \"role\": \"patient\",\n  \"password\": \"🫶🫶🫶🫶🫶🫶\",\n  \"confirmPassword\": \"🫶🫶🫶🫶🫶🫶\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "Nome, e-mail e senha aceitam emoji sem restrição de caracteres. O e-mail continua com emoji (esse é o ponto do teste), só ganha um número gerado na hora (variável emojiEmail) pra não colidir em execuções repetidas."
+          }
+        },
+        {
+          "name": "BUG-004 - Cadastro com senha só de espaços",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": ["pm.collectionVariables.set('spacePwEmail', 'senhaespaco+' + Date.now() + '@medalert.test');"] }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Teste Senha Espaco\",\n  \"email\": \"{{spacePwEmail}}\",\n  \"role\": \"patient\",\n  \"password\": \"      \",\n  \"confirmPassword\": \"      \"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "Senha com 6 espaços em branco passa na checagem de 'length >= 6'. E-mail gerado na hora (variável spacePwEmail) pra evitar 409 de duplicidade em reruns."
+          }
+        },
+        {
+          "name": "BUG-002 - Cadastro com payload XSS no nome",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": ["pm.collectionVariables.set('xssEmail', 'xsstest+' + Date.now() + '@medalert.test');"] }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Teste<img src=x onerror=alert(document.cookie)>\",\n  \"email\": \"{{xssEmail}}\",\n  \"role\": \"patient\",\n  \"password\": \"123456\",\n  \"confirmPassword\": \"123456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "Depois de rodar isso, faça LOGIN com essa conta no navegador (senha de 1 caractere já basta, BUG-005) e olhe o cabeçalho (topbar) — o alerta dispara lá. O e-mail é gerado na hora pra evitar 409 de duplicidade; pra saber qual foi usado nessa execução, veja a variável de coleção 'xssEmail' (clique no nome da collection → aba Variables → coluna 'Current Value'). IMPORTANTE: a tela de login (o <option> do seletor) NÃO é um bom lugar pra testar isso — navegadores descartam tags como <img> dentro de <select>/<option>, então esse ponto específico não executa o payload (confirmado com Cypress). O cabeçalho, a barra lateral e os títulos de aba, sim, executam."
+          }
+        },
+        {
+          "name": "Teste seguro - SQL Injection no nome (não é bug)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": ["pm.collectionVariables.set('sqlEmail', 'sqltest+' + Date.now() + '@medalert.test');"] }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Teste'; DROP TABLE users; --\",\n  \"email\": \"{{sqlEmail}}\",\n  \"role\": \"patient\",\n  \"password\": \"123456\",\n  \"confirmPassword\": \"123456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "Prepared statements do better-sqlite3 neutralizam a injeção — confirmação de que ESSE ponto está seguro. E-mail gerado na hora (variável sqlEmail) pra evitar 409 de duplicidade."
+          }
+        },
+        {
+          "name": "Teste seguro - role inválido direto na API (não é bug)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": ["pm.collectionVariables.set('roleEmail', 'roleinvalido+' + Date.now() + '@medalert.test');"] }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Teste Role Invalido\",\n  \"email\": \"{{roleEmail}}\",\n  \"role\": \"admin\",\n  \"password\": \"123456\",\n  \"confirmPassword\": \"123456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "Deve responder 400 'Perfil inválido' — confirmação de que essa validação funciona. E-mail gerado na hora (variável roleEmail) pra evitar 409 de duplicidade."
+          }
+        },
+        {
+          "name": "Teste seguro - E-mail duplicado é rejeitado corretamente (não é bug)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Teste E-mail Duplicado\",\n  \"email\": \"marina@medalert.test\",\n  \"role\": \"patient\",\n  \"password\": \"123456\",\n  \"confirmPassword\": \"123456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "Propositalmente NÃO gera e-mail aleatório: marina@medalert.test é uma usuária real do seed, então isso sempre deve voltar 409 'E-mail já cadastrado'. É o caso oposto dos testes acima — aqui reaproveitar o mesmo e-mail é o próprio ponto do teste, então ele fica fixo de propósito."
+          }
+        },
+        {
+          "name": "GET /api/auth/me (confirma sessão ativa)",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/auth/me" }
+        },
+        {
+          "name": "POST /api/auth/logout",
+          "request": { "method": "POST", "header": [], "url": "{{baseUrl}}/api/auth/logout" }
+        }
+      ]
+    },
+    {
+      "name": "02 - Patients (IDOR) - rodar 'Login Marina' antes",
+      "item": [
+        {
+          "name": "GET /api/patients (lista normal, só Marina)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/patients",
+            "description": "Comportamento correto: logada como Marina, só devolve ela mesma."
+          }
+        },
+        {
+          "name": "BUG-008 - GET /api/patients/pac2 (IDOR leitura)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/patients/pac2",
+            "description": "Logada como Marina (paciente), acessa o prontuário completo do Roberto (pac2), incluindo notas médicas privadas."
+          }
+        },
+        {
+          "name": "BUG-018 - PUT thresholds do Roberto (IDOR escrita)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hrHigh\": 999,\n  \"hrLow\": 1,\n  \"spo2Low\": 1,\n  \"tempHigh\": 999,\n  \"sysHigh\": 999\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/patients/pac2/thresholds",
+            "description": "Marina (paciente) altera os limiares de alerta de outro paciente."
+          }
+        },
+        {
+          "name": "BUG-018 - POST vitals falsos no Roberto (IDOR escrita)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hr\": -999,\n  \"spo2\": 200,\n  \"temp\": 40,\n  \"sys\": 300,\n  \"dia\": 200\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/patients/pac2/vitals",
+            "description": "Marina (paciente) lança sinais vitais fabricados no prontuário do Roberto."
+          }
+        },
+        {
+          "name": "BUG-018 - POST discharge no Roberto (IDOR escrita)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/patients/pac2/discharge",
+            "description": "Marina (paciente comum) dá alta no Roberto. Depois de demonstrar, rode 'Reset' na pasta 04 - Admin."
+          }
+        },
+        {
+          "name": "BUG-011 - POST vitals com FC exatamente no limite (100)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hr\": 100,\n  \"spo2\": 97,\n  \"temp\": 36.6,\n  \"sys\": 118,\n  \"dia\": 76\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/patients/pac1/vitals",
+            "description": "hr_high da Marina é 100. Com FC exatamente 100, NÃO deveria gerar alerta (bug de borda: código usa '>' em vez de '>='). Confira depois com GET /api/patients/pac1."
+          }
+        },
+        {
+          "name": "BUG-010 - POST vitals com FC negativa",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hr\": -50,\n  \"spo2\": 97,\n  \"temp\": 36.6,\n  \"sys\": 118,\n  \"dia\": 76\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/patients/pac1/vitals",
+            "description": "Sem validação de faixa fisiológica — FC negativa é aceita e gravada."
+          }
+        },
+        {
+          "name": "BUG-009 - POST vitals com temperatura em Fahrenheit real (98)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hr\": 75,\n  \"spo2\": 97,\n  \"temp\": 98,\n  \"sys\": 118,\n  \"dia\": 76\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/patients/pac1/vitals",
+            "description": "98 é temperatura corporal normal em Fahrenheit. O sistema compara direto com o limiar 37.8 (Celsius) e dispara alerta de febre indevidamente. Rode duas vezes seguidas pra também ver o BUG-012 (alertas duplicados)."
+          }
+        },
+        {
+          "name": "FEATURE-005 - POST vitals com diastolica absurda (200) - nao e bug, ver FEATURES.md",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hr\": 75,\n  \"spo2\": 97,\n  \"temp\": 36.6,\n  \"sys\": 118,\n  \"dia\": 200\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/patients/pac1/vitals",
+            "description": "Resposta vem com 'newAlerts: 0' mesmo com diastólica de 200 mmHg — não existe limiar nem regra pra esse campo em nenhum lugar do sistema. A especificação oficial do desafio não define regra de alerta para diastólica (só FC, SpO2, temperatura e sistólica), então isso não é bug pelo critério do próprio desafio — é sugestão de feature (FEATURES.md, FEATURE-005)."
+          }
+        },
+        {
+          "name": "BUG-019 - POST prescription sem paciente válido",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"drug\": \"Dipirona\",\n  \"dose\": \"500mg\",\n  \"freq\": \"8/8h\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/patients/undefined/prescriptions",
+            "description": "Responde 201 'sucesso' mesmo sem gravar nada, porque o :id 'undefined' não existe."
+          }
+        },
+        {
+          "name": "BUG-013 - GET pac2 (ver alerta crítico preso em 'pending')",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/patients/pac2",
+            "description": "O alerta crítico semeado (SpO2 91%) já passou dos 15 min de regra de escalonamento automático, mas o campo 'status' continua 'pending' — a função de auto-escalonamento nunca é chamada."
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Alerts",
+      "item": [
+        {
+          "name": "BUG-014 - POST acknowledge (rodar 2x com o mesmo id)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/alerts/{{alertId}}/acknowledge",
+            "description": "Preencha a variável {{alertId}} com um id de alerta pendente (veja no GET do paciente). Rode esta mesma requisição duas vezes seguidas: da segunda vez, sobrescreve 'acknowledged_by'/'acknowledged_at' sem nenhum aviso de que já tinha sido reconhecido."
+          }
+        },
+        {
+          "name": "POST escalate",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/alerts/{{alertId}}/escalate"
+          }
+        },
+        {
+          "name": "BUG-015 - Passo 1: Reconhecer alerta pendente",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/alerts/{{alertId}}/acknowledge",
+            "description": "Rode os 3 requests do BUG-015 em sequência, na ordem: 1 (este), 2, 3. Depois de cada um, confira o alerta com GET /api/patients/pac1 para ver o status e o acknowledgedBy/acknowledgedAt mudando (ou não)."
+          }
+        },
+        {
+          "name": "BUG-015 - Passo 2: Escalonar o MESMO alerta já reconhecido",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/alerts/{{alertId}}/escalate",
+            "description": "Status vira 'escalated', mas acknowledgedBy/acknowledgedAt do passo 1 continuam lá, sem serem limpos — alerta 'escalonado' que ainda mostra que foi 'reconhecido por Fulano'."
+          }
+        },
+        {
+          "name": "BUG-015 - Passo 3: Reconhecer de novo o alerta que estava escalonado",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/alerts/{{alertId}}/acknowledge",
+            "description": "Status volta para 'acknowledged', como se o escalonamento do passo 2 nunca tivesse existido. Não existe máquina de estados nem trava de transição entre reconhecer/escalonar."
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Admin",
+      "item": [
+        {
+          "name": "BUG-007 - POST reset (sem autenticação)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/admin/reset",
+            "description": "Apaga e recria todo o banco de dados, sem exigir login. Use também como 'botão de limpar' depois de rodar os testes de IDOR/cadastro, para deixar o sistema limpo de novo antes da apresentação."
+          }
+        }
+      ]
+    }
+  ]
+}

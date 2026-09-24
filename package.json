@@ -1,0 +1,25 @@
+{
+  "name": "medalert",
+  "version": "1.0.0",
+  "description": "MedAlert - hospital alert management system (QA5x technical challenge / LumeStack)",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "reset-db": "node server/reset-db.js",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "loadtest": "k6 run k6/load-test.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.11.1",
+    "cookie-parser": "^1.4.6",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "cypress": "^13.17.0"
+  }
+}

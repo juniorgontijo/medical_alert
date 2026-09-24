@@ -1,0 +1,3 @@
+Este arquivo existe apenas para o Git manter a pasta `data/` versionada.
+O arquivo do banco de dados (`medalert.db`) é criado automaticamente
+na primeira vez que o servidor roda e não é versionado (veja .gitignore).
