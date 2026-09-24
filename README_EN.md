@@ -118,7 +118,26 @@ The [.github/workflows/cypress.yml](.github/workflows/cypress.yml) workflow runs
 - **Postman:** [MedAlert_EN.postman_collection.json](MedAlert_EN.postman_collection.json) (or [MedAlert.postman_collection.json](MedAlert.postman_collection.json) in Portuguese) — import into Postman to test the routes manually.
 - **k6 (load test):**
   ```bash
-  k6 run k6/load-test.js
+  k6 run k6/load-test.js                        # load (default) — gradual ramp, normal usage
+  k6 run --env SCENARIO=smoke k6/load-test.js   # smoke — 1 user, 30s, just confirms it works
+  k6 run --env SCENARIO=spike k6/load-test.js   # spike — abrupt burst of 100 users
   ```
+  Stress/breakpoint/soak scenarios exist in k6 but were deliberately left out (risk of taking down the local presentation server, or requiring hours to run) — see the comment at the top of [k6/load-test.js](k6/load-test.js).
+
+  #### What p95/p99 means (and why not just use the average)
+
+  Every request made to the server has a different response time — most fast, some slower. **95th percentile (p95)** answers the question "how long did 95% of my requests take, at most?" — in other words, only the **slowest 5%** (the worst case) are left out of that count. **p99** is the same idea, just stricter: only the **slowest 1%** is excluded.
+
+  Why not just use the average? Because the average **hides** the bad cases. Example: if 99 users get served in 50ms and just 1 takes 10 seconds, the average still comes out low and "pretty" — but that one user had a terrible experience, and the average never tells that story. A percentile shows exactly what most people (or nearly everyone) actually felt, including the worst case that still matters.
+
+  #### Last execution — all 3 scenarios
+
+  | Scenario | Concurrent users | Duration | Requests | Errors | p95 (target) | p99 (target) | Result |
+  |---|---|---|---|---|---|---|---|
+  | **smoke** | 1 (fixed) | 30s | 122 | 0.00% | 0.66ms (<500ms) | — | ✅ Thresholds passed |
+  | **load** | 0 -> 10 -> peak of 30 -> 0 | 1m20s | 5,230 | 0.00% | 1.03ms (<500ms) | 1.17ms (<1000ms) | ✅ Thresholds passed |
+  | **spike** | 5 -> abrupt peak of 100 -> 5 -> 0 | 40s | 8,442 | 0.00% | 1.03ms (<800ms) | 1.19ms (<2000ms) | ✅ Thresholds passed |
+
+  **Reading the result:** all 3 scenarios closed with **0% errors** and latency well under target in every case — including `spike`, where the system took an abrupt jump from 5 to 100 concurrent users and kept responding in ~1ms, with no timeouts or failures. For this system, performance doesn't appear to be a real bottleneck risk — the serious problems found in this project are security and business-rule bugs (see [BUGS_EN.md](BUGS_EN.md)), not load capacity.
 - **Excel:** `BUGS.xlsx` — the same content as BUGS.md, in spreadsheet form.
 - **Interactive site:** published bug log with filtering, search, and evidence upload (link shared separately).

@@ -118,7 +118,26 @@ O workflow [.github/workflows/cypress.yml](.github/workflows/cypress.yml) roda a
 - **Postman:** [MedAlert.postman_collection.json](MedAlert.postman_collection.json) (ou [MedAlert_EN.postman_collection.json](MedAlert_EN.postman_collection.json) em inglês) — importar no Postman pra testar as rotas manualmente.
 - **k6 (teste de carga):**
   ```bash
-  k6 run k6/load-test.js
+  k6 run k6/load-test.js                        # load (padrão) — carga gradual, uso normal
+  k6 run --env SCENARIO=smoke k6/load-test.js   # smoke — 1 usuário, 30s, só confirma que funciona
+  k6 run --env SCENARIO=spike k6/load-test.js   # spike — pico abrupto de 100 usuários
   ```
+  Cenários stress/breakpoint/soak existem no k6 mas foram deixados de fora de propósito (risco de derrubar o servidor local da apresentação, ou exigem horas de execução) — ver comentário no topo de [k6/load-test.js](k6/load-test.js).
+
+  #### O que é p95/p99 (e por que não usar só a média)
+
+  Cada requisição feita ao servidor tem um tempo de resposta diferente — a maioria rápida, algumas mais lentas. **Percentil 95 (p95)** responde à pergunta "das minhas requisições, 95% delas responderam em até quanto tempo?" — ou seja, só as **5% mais lentas** (o pior caso) ficam de fora dessa conta. **p99** é a mesma ideia, só que mais rigorosa: só o **1% mais lento** fica de fora.
+
+  Por que não usar a média? Porque a média **esconde** os casos ruins. Exemplo: se 99 usuários são atendidos em 50ms e só 1 demora 10 segundos, a média ainda dá um número baixinho e "bonito" — mas aquele usuário teve uma experiência péssima, e a média nunca conta essa história. O percentil mostra exatamente o que a maioria (ou quase todo mundo) sentiu de verdade, incluindo o pior caso relevante.
+
+  #### Última execução — os 3 cenários
+
+  | Cenário | Usuários simultâneos | Duração | Requisições | Erros | p95 (meta) | p99 (meta) | Resultado |
+  |---|---|---|---|---|---|---|---|
+  | **smoke** | 1 (fixo) | 30s | 122 | 0,00% | 0,66ms (<500ms) | — | ✅ Thresholds passaram |
+  | **load** | 0 → 10 → pico de 30 → 0 | 1m20s | 5.230 | 0,00% | 1,03ms (<500ms) | 1,17ms (<1000ms) | ✅ Thresholds passaram |
+  | **spike** | 5 → pico abrupto de 100 → 5 → 0 | 40s | 8.442 | 0,00% | 1,03ms (<800ms) | 1,19ms (<2000ms) | ✅ Thresholds passaram |
+
+  **Leitura do resultado:** os 3 cenários fecharam com **0% de erro** e latência bem abaixo da meta em todos os casos — inclusive no `spike`, onde o sistema levou um salto abrupto de 5 pra 100 usuários simultâneos e continuou respondendo em ~1ms, sem timeout nem falha. Pra esse sistema, o gargalo de performance não parece ser um risco real — os problemas sérios encontrados no projeto são de segurança e regra de negócio (ver [BUGS.md](BUGS.md)), não de capacidade sob carga.
 - **Excel:** `BUGS.xlsx` — mesmo conteúdo do BUGS.md, em formato planilha.
 - **Site interativo:** log de bugs publicado com filtro, busca e upload de evidência (link compartilhado separadamente).
