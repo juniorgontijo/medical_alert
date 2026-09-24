@@ -113,6 +113,7 @@ Vídeos:     29/29 gerados com sucesso em cypress/videos/
 O workflow [.github/workflows/cypress.yml](.github/workflows/cypress.yml) roda a suíte automaticamente a cada push/PR na branch `main`, dividida em 2 jobs:
 - **`happy-path`** — roda só os 6 testes que devem passar. É o único que trava o pipeline (vermelho aqui = algo realmente quebrou).
 - **`bug-suite`** — roda os outros 23 testes que provam bug. Configurado com `continue-on-error`, então pode falhar à vontade sem derrubar o pipeline — cada falha aqui é o resultado esperado, não um erro de infraestrutura. Os vídeos/prints ficam disponíveis como artifact do próprio run, em Actions.
+- **`k6-smoke`** — roda o cenário `smoke` do k6 a cada push, também informativo (`continue-on-error`). Threshold de performance numa máquina compartilhada do GitHub varia por ruído de vizinho, então não trava o pipeline — serve como checagem leve de regressão, não como gate de release.
 
 ## Outras ferramentas do projeto
 - **Postman:** [MedAlert.postman_collection.json](MedAlert.postman_collection.json) (ou [MedAlert_EN.postman_collection.json](MedAlert_EN.postman_collection.json) em inglês) — importar no Postman pra testar as rotas manualmente.

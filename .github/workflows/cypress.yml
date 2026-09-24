@@ -87,3 +87,44 @@ jobs:
           name: cypress-bug-screenshots
           path: cypress/screenshots
           if-no-files-found: ignore
+
+  k6-smoke:
+    name: k6 smoke test (performance sanity check, informational only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - run: npm ci
+
+      - name: Reset database to a known state
+        run: npm run reset-db
+
+      - name: Start MedAlert server
+        run: npm start &
+
+      - name: Wait for the server to respond
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000 > /dev/null && exit 0
+            sleep 1
+          done
+          echo "Server never came up" && exit 1
+
+      - uses: grafana/setup-k6-action@v1
+
+      # Performance thresholds on a shared, noisy CI runner aren't reliable
+      # enough to gate a merge on — this job is a lightweight regression
+      # trend check, not a release gate. Only the "smoke" scenario runs
+      # here (fast, 1 VU); load/spike are meant for local runs before a
+      # presentation, not every push. See k6/load-test.js for why
+      # stress/breakpoint/soak are excluded entirely.
+      - name: Run k6 smoke scenario
+        continue-on-error: true
+        uses: grafana/run-k6-action@v1
+        with:
+          path: k6/load-test.js
+          flags: --env SCENARIO=smoke

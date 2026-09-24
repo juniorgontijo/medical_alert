@@ -113,6 +113,7 @@ Videos:     29/29 generated successfully in cypress/videos/
 The [.github/workflows/cypress.yml](.github/workflows/cypress.yml) workflow runs the suite automatically on every push/PR to `main`, split into 2 jobs:
 - **`happy-path`** — runs only the 6 tests that should pass. This is the only job that gates the pipeline (a red check here means something actually broke).
 - **`bug-suite`** — runs the other 23 bug-proving tests. Configured with `continue-on-error`, so it can fail freely without bringing the pipeline down — every failure here is the expected result, not an infrastructure error. Videos/screenshots are uploaded as an artifact of that run, under Actions.
+- **`k6-smoke`** — runs the k6 `smoke` scenario on every push, also informational (`continue-on-error`). Performance thresholds on a shared GitHub runner vary with noisy-neighbor load, so this never gates the pipeline — it's a lightweight regression check, not a release gate.
 
 ## Other tools in the project
 - **Postman:** [MedAlert_EN.postman_collection.json](MedAlert_EN.postman_collection.json) (or [MedAlert.postman_collection.json](MedAlert.postman_collection.json) in Portuguese) — import into Postman to test the routes manually.
