@@ -463,7 +463,7 @@ A reading with HR exactly equal to the threshold (e.g., 100 when `hr_high = 100`
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-![BUG-011](evidencias/BUG-011.png)
+🎥 Evidence video: [BUG-011](evidencias/pt/BUG-011/video-1.mp4)
 
 ---
 
@@ -491,7 +491,7 @@ The minimal fix is simply for the back-end not to insert the repeated alert. As 
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-![BUG-012](evidencias/BUG-012.png)
+🎥 Evidence video: [BUG-012](evidencias/pt/BUG-012/video-1.mp4)
 
 ---
 
@@ -548,7 +548,7 @@ When trying to acknowledge an alert that's already `acknowledged`, the system sh
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-![BUG-014](evidencias/BUG-014.png)
+🎥 Evidence video: [BUG-014](evidencias/pt/BUG-014/video-1.mp4)
 
 ---
 
@@ -594,7 +594,7 @@ BUG-014 is about acknowledging the **same status** twice (loses who acknowledged
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-![BUG-015](evidencias/BUG-015.png)
+🎥 Evidence video: [BUG-015](evidencias/en/BUG-015/video-1.mp4)
 
 ---
 
@@ -620,7 +620,7 @@ A nurse acknowledges the only pending alert for a patient, but the "Pending aler
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-![BUG-016](evidencias/BUG-016.png)
+🎥 Evidence video: [BUG-016](evidencias/en/BUG-016/video-1.mp4)
 
 ---
 
@@ -651,7 +651,7 @@ Combined with **BUG-014** (acknowledging an already-acknowledged alert overwrite
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-![BUG-017](evidencias/BUG-017.png)
+🎥 Evidence video: [BUG-017](evidencias/en/BUG-017/video-1.mp4)
 
 ---
 
@@ -709,7 +709,7 @@ In other words, a regular patient — with no nursing or medical permission what
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-![BUG-018](evidencias/BUG-018.png)
+_No evidence (screenshot/video) attached yet._
 
 ---
 
@@ -740,7 +740,7 @@ The front-end shouldn't allow opening/submitting the form without a selected pat
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-![BUG-019](evidencias/BUG-019.png)
+🎥 Evidence video: [BUG-019](evidencias/en/BUG-019/video-1.mp4)
 
 ---
 
@@ -765,7 +765,7 @@ A single, accidental click already finalizes the patient's discharge, with no ch
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-![BUG-020](evidencias/BUG-020.png)
+🎥 Evidence video: [BUG-020](evidencias/en/BUG-020/video-1.mp4)
 
 ---
 
@@ -796,7 +796,7 @@ After the discharge, the button should give some clear visual signal: turn gray/
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-![BUG-021](evidencias/BUG-021.png)
+🎥 Evidence video: [BUG-021](evidencias/en/BUG-021/video-1.mp4)
 
 ---
 

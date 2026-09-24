@@ -453,7 +453,7 @@ Uma leitura de FC exatamente igual ao limiar (ex.: 100 quando `hr_high = 100`) *
 
 ### Evidência (print)
 <!-- Cole aqui o(s) print(s) de tela deste bug -->
-![BUG-011](evidencias/BUG-011.png)
+🎥 Vídeo de evidência: [BUG-011](evidencias/pt/BUG-011/video-1.mp4)
 
 ---
 
@@ -481,7 +481,7 @@ A correção mínima é só o back-end não inserir o alerta repetido. Como "plu
 
 ### Evidência (print)
 <!-- Cole aqui o(s) print(s) de tela deste bug -->
-![BUG-012](evidencias/BUG-012.png)
+🎥 Vídeo de evidência: [BUG-012](evidencias/pt/BUG-012/video-1.mp4)
 
 ---
 
@@ -538,7 +538,7 @@ Ao tentar reconhecer um alerta que já está `acknowledged`, o sistema deveria b
 
 ### Evidência (print)
 <!-- Cole aqui o(s) print(s) de tela deste bug -->
-![BUG-014](evidencias/BUG-014.png)
+🎥 Vídeo de evidência: [BUG-014](evidencias/pt/BUG-014/video-1.mp4)
 
 ---
 
@@ -584,7 +584,7 @@ O BUG-014 é sobre reconhecer o **mesmo status** duas vezes (perde quem reconhec
 
 ### Evidência (print)
 <!-- Cole aqui o(s) print(s) de tela deste bug -->
-![BUG-015](evidencias/BUG-015.png)
+🎥 Vídeo de evidência: [BUG-015](evidencias/en/BUG-015/video-1.mp4)
 
 ---
 
@@ -610,7 +610,7 @@ Enfermeiro reconhece o único alerta pendente de um paciente, mas o badge "Alert
 
 ### Evidência (print)
 <!-- Cole aqui o(s) print(s) de tela deste bug -->
-![BUG-016](evidencias/BUG-016.png)
+🎥 Vídeo de evidência: [BUG-016](evidencias/en/BUG-016/video-1.mp4)
 
 ---
 
@@ -641,7 +641,7 @@ Combinado com o **BUG-014** (reconhecer um alerta já reconhecido sobrescreve qu
 
 ### Evidência (print)
 <!-- Cole aqui o(s) print(s) de tela deste bug -->
-![BUG-017](evidencias/BUG-017.png)
+🎥 Vídeo de evidência: [BUG-017](evidencias/en/BUG-017/video-1.mp4)
 
 ---
 
@@ -699,7 +699,7 @@ Ou seja, uma paciente comum — sem nenhuma permissão de enfermagem ou médica 
 
 ### Evidência (print)
 <!-- Cole aqui o(s) print(s) de tela deste bug -->
-![BUG-018](evidencias/BUG-018.png)
+_Nenhuma evidência (print/vídeo) anexada ainda._
 
 ---
 
@@ -730,7 +730,7 @@ Front não deveria permitir abrir/enviar o formulário sem paciente selecionado 
 
 ### Evidência (print)
 <!-- Cole aqui o(s) print(s) de tela deste bug -->
-![BUG-019](evidencias/BUG-019.png)
+🎥 Vídeo de evidência: [BUG-019](evidencias/en/BUG-019/video-1.mp4)
 
 ---
 
@@ -755,7 +755,7 @@ Um clique único e sem querer já efetiva a alta do paciente, sem chance de canc
 
 ### Evidência (print)
 <!-- Cole aqui o(s) print(s) de tela deste bug -->
-![BUG-020](evidencias/BUG-020.png)
+🎥 Vídeo de evidência: [BUG-020](evidencias/en/BUG-020/video-1.mp4)
 
 ---
 
@@ -786,7 +786,7 @@ Depois da alta, o botão deveria dar algum sinal visual claro: ficar acinzentado
 
 ### Evidência (print)
 <!-- Cole aqui o(s) print(s) de tela deste bug -->
-![BUG-021](evidencias/BUG-021.png)
+🎥 Vídeo de evidência: [BUG-021](evidencias/en/BUG-021/video-1.mp4)
 
 ---
 
