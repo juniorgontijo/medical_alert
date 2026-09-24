@@ -1,0 +1,887 @@
+<title>MedAlert Triage</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --paper: #eef2f1;
+    --paper-raised: #ffffff;
+    --ink: #16232b;
+    --ink-soft: #4a5a63;
+    --ink-faint: #7c8b92;
+    --line: #d7dede;
+    --brand: #1f6f78;
+    --brand-soft: #e4f1f1;
+    --sev-critica: #c0392b;   --sev-critica-bg: #fbeae7;
+    --sev-alta:    #b8631d;  --sev-alta-bg:    #fbeee0;
+    --sev-media:   #93761c;  --sev-media-bg:   #faf3dc;
+    --sev-baixa:   #3f6b76;  --sev-baixa-bg:   #e7eff0;
+    --tag-bg: #eef1f0;
+    --tag-ink: #56666d;
+    --shadow: 0 1px 2px rgba(22,35,43,.06), 0 6px 20px -8px rgba(22,35,43,.18);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #10181c;
+      --paper-raised: #1a252b;
+      --ink: #e8edee;
+      --ink-soft: #a2b0b5;
+      --ink-faint: #6f8086;
+      --line: #2b383e;
+      --brand: #56b7bf;
+      --brand-soft: #17383c;
+      --sev-critica: #e78376;   --sev-critica-bg: #3a2420;
+      --sev-alta:    #e0a869;  --sev-alta-bg:    #3a2d18;
+      --sev-media:   #d6c078;  --sev-media-bg:   #352e16;
+      --sev-baixa:   #86b3bc;  --sev-baixa-bg:   #1b2c30;
+      --tag-bg: #202b30;
+      --tag-ink: #9db0b6;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 26px -10px rgba(0,0,0,.55);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #10181c;
+    --paper-raised: #1a252b;
+    --ink: #e8edee;
+    --ink-soft: #a2b0b5;
+    --ink-faint: #6f8086;
+    --line: #2b383e;
+    --brand: #56b7bf;
+    --brand-soft: #17383c;
+    --sev-critica: #e78376;   --sev-critica-bg: #3a2420;
+    --sev-alta:    #e0a869;  --sev-alta-bg:    #3a2d18;
+    --sev-media:   #d6c078;  --sev-media-bg:   #352e16;
+    --sev-baixa:   #86b3bc;  --sev-baixa-bg:   #1b2c30;
+    --tag-bg: #202b30;
+    --tag-ink: #9db0b6;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 26px -10px rgba(0,0,0,.55);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    line-height: 1.5;
+    padding-inline: 20px;
+    padding-block: 28px 60px;
+  }
+  code, .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+
+  .wrap { max-width: 980px; margin-inline: auto; }
+
+  /* ---------- Header / stat strip ---------- */
+  header.top { margin-bottom: 20px; }
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--brand);
+    margin: 0 0 6px;
+  }
+  h1 {
+    font-size: clamp(28px, 5vw, 40px);
+    font-weight: 700;
+    margin: 0 0 8px;
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+  .subtitle { color: var(--ink-soft); font-size: 15px; max-width: 62ch; margin: 0 0 22px; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .stat {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 10px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .stat .n { font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: 11px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .05em; margin-top: 2px; }
+  .stat[data-sev="critica"] .n { color: var(--sev-critica); }
+  .stat[data-sev="alta"] .n    { color: var(--sev-alta); }
+  .stat[data-sev="media"] .n   { color: var(--sev-media); }
+  .stat[data-sev="baixa"] .n   { color: var(--sev-baixa); }
+
+  @media (max-width: 560px) {
+    .stats { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  /* ---------- Glossary ---------- */
+  .glossary {
+    background: var(--brand-soft);
+    border: 1px solid var(--brand);
+    border-radius: 10px;
+    padding: 4px 16px;
+    margin-bottom: 4px;
+  }
+  .glossary summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 10px 0;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--brand);
+  }
+  .glossary summary::-webkit-details-marker { display: none; }
+  .glossary-body { padding: 2px 0 14px; display: flex; flex-direction: column; gap: 10px; }
+  .glossary-body p { margin: 0; font-size: 13px; color: var(--ink-soft); line-height: 1.55; }
+  .glossary-body strong { color: var(--ink); }
+  .glossary-body code { font-family: 'IBM Plex Mono', monospace; font-size: 12px; background: var(--paper); padding: 1px 5px; border-radius: 4px; }
+
+  /* ---------- Controls ---------- */
+  .controls {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--paper);
+    padding-block: 10px;
+    margin-bottom: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+  }
+  #search {
+    flex: 1 1 200px;
+    min-width: 0;
+    font: inherit;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--paper-raised);
+    color: var(--ink);
+  }
+  #search:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--paper-raised);
+    color: var(--ink-soft);
+    cursor: pointer;
+    user-select: none;
+  }
+  .chip:hover { border-color: var(--brand); color: var(--ink); }
+  .chip[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .chip:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  /* ---------- Sections ---------- */
+  section.etapa { margin-bottom: 30px; }
+  .etapa h2 {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--ink-faint);
+    margin: 0 0 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  .cards { display: flex; flex-direction: column; gap: 8px; }
+
+  /* ---------- Bug card ---------- */
+  details.bug {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--sev-c, var(--ink-faint));
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  details.bug[data-sev="critica"] { --sev-c: var(--sev-critica); }
+  details.bug[data-sev="alta"]    { --sev-c: var(--sev-alta); }
+  details.bug[data-sev="media"]   { --sev-c: var(--sev-media); }
+  details.bug[data-sev="baixa"]   { --sev-c: var(--sev-baixa); }
+
+  summary.bug-head {
+    list-style: none;
+    cursor: pointer;
+    padding: 13px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  summary.bug-head::-webkit-details-marker { display: none; }
+  summary.bug-head::before {
+    content: '▸';
+    font-size: 12px;
+    color: var(--ink-faint);
+    transition: transform .15s ease;
+    flex: 0 0 auto;
+  }
+  details[open] > summary.bug-head::before { transform: rotate(90deg); }
+
+  .id { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; color: var(--ink-faint); flex: 0 0 auto; }
+  .sev-chip {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 999px;
+    flex: 0 0 auto;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+  }
+  details[data-sev="critica"] .sev-chip { background: var(--sev-critica-bg); color: var(--sev-critica); }
+  details[data-sev="alta"] .sev-chip    { background: var(--sev-alta-bg); color: var(--sev-alta); }
+  details[data-sev="media"] .sev-chip   { background: var(--sev-media-bg); color: var(--sev-media); }
+  details[data-sev="baixa"] .sev-chip   { background: var(--sev-baixa-bg); color: var(--sev-baixa); }
+
+  .camada-tag {
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--tag-bg);
+    color: var(--tag-ink);
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .tipo-tag {
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    padding: 3px 9px;
+    border-radius: 999px;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    border: 1px solid currentColor;
+  }
+  .tipo-tag[data-tipo="preta"]  { color: var(--ink-faint); background: var(--tag-bg); }
+  .tipo-tag[data-tipo="cinza"]  { color: var(--sev-baixa); background: var(--sev-baixa-bg); }
+  .tipo-tag[data-tipo="branca"] { color: var(--sev-alta); background: var(--sev-alta-bg); }
+  .categoria-tag {
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    background: var(--brand-soft);
+    color: var(--brand);
+  }
+  .bug-title { font-size: 14px; font-weight: 500; flex: 1 1 240px; min-width: 0; }
+
+  .bug-body { padding: 4px 16px 18px 34px; display: flex; flex-direction: column; gap: 14px; }
+  .field > label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--ink-faint);
+    margin-bottom: 4px;
+  }
+  .field > p, .field > div { font-size: 13.5px; color: var(--ink); margin: 0; }
+  .field.evidencia > p, .field.evidencia > div { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--ink-soft); background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; overflow-x: auto; }
+  .confirm-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .confirm-badge {
+    font-size: 11.5px;
+    font-family: 'IBM Plex Mono', monospace;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--brand-soft);
+    color: var(--brand);
+    border: 1px solid var(--brand);
+  }
+  .obs { font-size: 13px; color: var(--ink-soft); font-style: italic; }
+
+  /* ---------- Media evidence (screenshots/videos) ---------- */
+  .media-strip { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .media-thumb {
+    position: relative;
+    width: 84px; height: 84px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    cursor: pointer;
+    flex: 0 0 auto;
+  }
+  .media-thumb img, .media-thumb video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .media-thumb .play-badge {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,.28);
+    color: #fff; font-size: 20px;
+    pointer-events: none;
+  }
+  .media-thumb:hover { border-color: var(--brand); }
+  .media-thumb:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .media-thumb .del-btn {
+    position: absolute; top: 3px; right: 3px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: rgba(0,0,0,.6);
+    color: #fff;
+    border: none;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0;
+    transition: opacity .12s ease, background .12s ease;
+  }
+  .media-thumb:hover .del-btn,
+  .media-thumb:focus-within .del-btn,
+  .media-thumb .del-btn:focus-visible { opacity: 1; }
+  .media-thumb .del-btn:hover { background: var(--sev-critica); }
+  .media-thumb .del-btn[data-busy="true"] { opacity: 1; pointer-events: none; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+    background: var(--ink); color: var(--paper);
+    font-size: 13px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    z-index: 60;
+    max-width: min(420px, calc(100vw - 32px));
+    text-align: center;
+  }
+  .toast[hidden] { display: none; }
+
+  .media-add {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    font-size: 12.5px;
+    color: var(--brand);
+    border: 1px dashed var(--brand);
+    background: var(--brand-soft);
+    border-radius: 8px;
+    padding: 0 12px;
+    height: 84px;
+    width: 84px;
+    text-align: center;
+    cursor: pointer;
+    flex: 0 0 auto;
+    line-height: 1.25;
+  }
+  .media-add:hover { background: var(--brand); color: #fff; }
+  .media-add input[type="file"] { display: none; }
+  .media-add[data-busy="true"] { opacity: .6; pointer-events: none; }
+  .media-empty-hint { font-size: 12px; color: var(--ink-faint); }
+
+  .empty-msg { display: none; text-align: center; color: var(--ink-faint); padding: 30px 0; font-size: 14px; }
+
+  footer.note {
+    margin-top: 34px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+    color: var(--ink-faint);
+  }
+  footer.note h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-soft); margin: 0 0 8px; }
+  footer.note ul { margin: 0; padding-left: 18px; }
+  footer.note li { margin-bottom: 6px; }
+
+  /* ---------- Lightbox ---------- */
+  .lightbox {
+    position: fixed; inset: 0;
+    background: rgba(8,12,14,.86);
+    display: flex; align-items: center; justify-content: center;
+    padding: 28px;
+    z-index: 50;
+  }
+  .lightbox[hidden] { display: none; }
+  .lightbox img, .lightbox video { max-width: 100%; max-height: 100%; border-radius: 8px; display: block; }
+  .lightbox-close {
+    position: fixed; top: 18px; right: 20px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    background: rgba(255,255,255,.12);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,.4);
+    border-radius: 8px;
+    padding: 7px 13px;
+    cursor: pointer;
+  }
+  .lightbox-close:hover { background: rgba(255,255,255,.22); }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow">QA Report · MedAlert System</p>
+    <h1>Bug Triage</h1>
+    <p class="subtitle">21 bugs found through manual testing + source code review, organized like a triage chart: by clinical severity and by the order they appear in real system usage — sign-up → login → patients → nursing → alerts → doctor.</p>
+
+    <div class="stats" id="stats"></div>
+
+    <details class="glossary">
+      <summary>📖 Quick glossary — technical terms used below (click to open)</summary>
+      <div class="glossary-body">
+        <p><strong>Browser console (DevTools):</strong> a hidden browser panel meant for web developers. Opens with the <strong>F12</strong> key (or right-click → "Inspect" → "Console" tab). You can paste a small command in there and it runs instantly, as if the site itself were doing it.</p>
+        <p><strong><code>fetch(...)</code>:</strong> the command pasted into the Console to make the browser call an API route directly (e.g., "discharge a patient"), without clicking any button on screen. Just copy and paste it exactly as written in each bug's steps.</p>
+        <p><strong>JSON:</strong> the text format the API returns as a response, like <code>{"ok":true}</code>. It's just a way of organizing information as "name: value" pairs — readable as-is.</p>
+        <p><strong>Timestamp</strong> (e.g., <code>1790081356243</code>): how the system stores "when something happened" — it's the number of milliseconds (1/1000 of a second) counted since January 1st, 1970. No need to understand the number itself, just know that <strong>smaller</strong> means <strong>older</strong>.</p>
+        <p><strong>Hash</strong> (of a password): a password "scrambled" in a way that can't be unscrambled back. A correct system never stores the exact password, only this scrambled version — and compares by scrambling again at login time.</p>
+        <p><strong>IDOR:</strong> short for "Insecure Direct Object Reference" — in practice, it means the system lets you access <strong>someone else's</strong> data just by swapping a number/ID in the URL or request, with no check on whether you're allowed to.</p>
+        <p><strong>Session cookie:</strong> a "badge" the browser keeps after login, proving who you are on the following requests. It's automatically reused if you open a new tab in the same browser — that's why several steps say to open "a new tab" instead of logging in again.</p>
+        <p><strong>Black-box / Gray-box / White-box</strong> (the tag on each card, next to the layer): indicates how the bug was found. <strong>Black-box</strong> = found purely through the screen/API, with no "inside" access to the system. <strong>Gray-box</strong> = needed partial inside access (querying the database, looking at the raw API response in the Console) but without reading the code's logic. <strong>White-box</strong> = could only be found (or confirmed) by reading the source code — no amount of testing through the screen alone would reveal it.</p>
+        <p><strong>Category</strong> (the purple/green tag on each card): the type of problem, not how it was found. <strong>Security</strong> = someone can do something they shouldn't (view/change someone else's data, bypass login). <strong>Functional</strong> = a system rule doesn't work the way it should (wrong calculation, missing validation). <strong>Data Integrity</strong> = information becomes inconsistent, or is lost/overwritten unintentionally. <strong>Usability (UX)</strong> = missing clarity or protection for the user (no confirmation, wrong counter). <strong>Visual</strong> = the screen doesn't correctly reflect what's actually happening underneath.</p>
+      </div>
+    </details>
+  </header>
+
+  <div class="controls">
+    <input id="search" type="search" placeholder="Search by ID or keyword (e.g., BUG-002, password, alert)…" aria-label="Search bug">
+    <div class="chip-row" id="sevFilters" role="group" aria-label="Filter by severity"></div>
+  </div>
+
+  <main id="sections"></main>
+  <p class="empty-msg" id="emptyMsg">No bugs found for this filter.</p>
+
+  <footer class="note">
+    <h3>Additional notes (not classified as a standalone bug)</h3>
+    <ul>
+      <li>Every newly self-registered patient is always linked to the <strong>first</strong> nurse and the <strong>first</strong> doctor in the database (with no distribution criteria at all) — a naive assignment rule, not an execution error.</li>
+      <li>Patient sign-up doesn't collect age or bed number — they stay empty until someone edits the database directly; there's no screen for this.</li>
+    </ul>
+  </footer>
+</div>
+
+<div class="lightbox" id="lightbox" hidden>
+  <button class="lightbox-close" id="lightboxClose" type="button">Close ✕</button>
+  <div id="lightboxContent"></div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function () {
+  const SEV_ORDER = ['critica', 'alta', 'media', 'baixa'];
+  const SEV_LABEL = { critica: 'Critical', alta: 'High', media: 'Medium', baixa: 'Low' };
+  const TIPO_LABEL = { preta: 'Black-box', cinza: 'Gray-box', branca: 'White-box' };
+  const CATEGORIA_LABEL = { seguranca: 'Security', funcional: 'Functional', integridade: 'Data Integrity', usabilidade: 'Usability (UX)', visual: 'Visual' };
+  const ACCEPTED_TYPES = 'image/png,image/jpeg,image/gif,image/webp,video/mp4,video/webm';
+
+  const BUGS = [
+    { id:'BUG-001', etapa:'1. User Sign-up', titulo:'Passwords stored in plain text (no hashing)', sev:'critica', camada:'Back-end', tipo:'cinza', categoria:'seguranca',
+      evidencia:'server/routes/auth.js:60-61 — INSERT INTO users writes "password" exactly as received, with no bcrypt/argon2/scrypt (no hashing library is imported anywhere in the project).',
+      passos:'1) Sign up with password "123456". 2) Open the file data/medalert.db in VS Code (SQLite extension) and look at the users table, password column.',
+      atual:'The password shows up readable, identical to what was typed (confirmed for seed users and test accounts, including one with emoji).',
+      esperado:'Hash on sign-up (e.g., bcrypt.hash) and bcrypt.compare() on login — the database should never store the original password.',
+      confirmacao:['Manual · DB query', 'Automated · Cypress cy.task'],
+      obs:'Even if BUG-005 is fixed someday, this problem still exists on its own — an independent, critical failure.' },
+    { id:'BUG-002', etapa:'1. User Sign-up', titulo:'Stored XSS: sign-up name rendered unescaped on 9 screens', sev:'critica', camada:'Front-end + Back-end', tipo:'preta', categoria:'seguranca',
+      evidencia:'server/routes/auth.js:50 (back end, no sanitization) + public/app.js lines 97, 272, 409, 317, 343, 451, 475, 494 (front end, interpolates unescaped into innerHTML). The &lt;option&gt; in the login selector (line 110) does NOT execute — the browser discards tags inside &lt;select&gt;.',
+      passos:'1) On "Sign up", fill Full name with: Test&lt;img src=x onerror=alert(document.cookie)&gt;. 2) Fill in email/password and click Sign up. 3) Go back to the home screen: in "User" select this new account, in "Password" type anything (e.g., x), click "Log in". 4) The payload fires in the header at the top of the screen.',
+      atual:'The browser creates a real &lt;img&gt; tag in the header DOM — the injected HTML/JS is interpreted, not just dirty data sitting in the database. Confirmed with Cypress (AssertionError: &lt;img#xss-proof-cypress&gt; continuously found).',
+      esperado:'Never insert user data directly into innerHTML. Escape (<,>,",&) or use textContent/DOM APIs.',
+      confirmacao:['Automated · Cypress', 'Manual · API'],
+      obs:"Combined with BUG-008/BUG-018 (IDOR), an injected script could leak every patient's medical record." },
+    { id:'BUG-003', etapa:'1. User Sign-up', titulo:'Sign-up email validation accepts an invalid domain/TLD', sev:'media', camada:'Back-end', tipo:'preta', categoria:'funcional',
+      evidencia:'server/routes/auth.js:7 — EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/ validates neither a real TLD nor its length.',
+      passos:'1) On "Sign up", fill email with "a@a.123456" (a numbers-only TLD) and fill the rest normally. 2) Click Sign up. 3) (Extra) Go back to the home screen, in "User" select this account, in "Password" type anything (e.g., x), click "Log in" — it logs in normally.',
+      atual:'Sign-up is accepted normally for clearly invalid TLDs. Confirmed with Cypress: the test logs in with this account (via BUG-005) and expects the header NOT to exist — it fails after 4s of retrying (AssertionError: Timed out retrying after 4000ms: Expected &lt;header.topbar&gt; not to exist in the DOM, but it was continuously found), proving the account logs in normally.',
+      esperado:'An alphabetic TLD with a plausible length (2-24 characters), or confirmation via a link sent to the email.',
+      confirmacao:['Manual', 'API', 'Automated · Cypress'],
+      obs:'Tests that passed on this same screen: duplicate name (expected), duplicate email blocked (correct), password != confirmation blocked (correct).' },
+    { id:'BUG-004', etapa:'1. User Sign-up', titulo:'Sign-up accepts emoji in name, email, and password with no sanitization', sev:'media', camada:'Back-end', tipo:'preta', categoria:'funcional',
+      evidencia:'server/routes/auth.js:50 (name), :7 (email), :53 (password, only checks length < 6, not character type).',
+      passos:'1) On "Sign up", fill Name, Email, and Password/Confirm password with emoji (e.g., 🫶🫶🫶🫶🫶🫶); or a password of just 6 spaces. 2) Click Sign up. 3) (Extra) Go back to the home screen, in "User" select this account, in "Password" type anything (e.g., x), click "Log in" — it logs in normally, emoji show up in the header.',
+      atual:'Sign-up is accepted normally on all 3 fields; the data is stored as-is in the database (confirmed directly in the users table). Confirmed with Cypress: the test logs in with this emoji account (via BUG-005) and expects the header NOT to exist — it fails after 4s of retrying (AssertionError: Timed out retrying after 4000ms: Expected &lt;header.topbar&gt; not to exist in the DOM, but it was continuously found), proving the account logs in normally (the emoji really do show up in the header).',
+      esperado:'Name: letters/spaces/basic punctuation only. Email: reject characters outside the real format. Password: a minimum based on actual strength, not just raw length.',
+      confirmacao:['Manual', 'Automated · Cypress'],
+      obs:'The same name field is reused unescaped across several screens — see BUG-002.' },
+    { id:'BUG-005', etapa:'2. Login', titulo:"Login only requires 1 character of password and never checks it's correct", sev:'critica', camada:'Back-end', tipo:'preta', categoria:'seguranca',
+      evidencia:'server/routes/auth.js:31 — the only check is "if (!password || password.length === 0)"; it never compares against user.password.',
+      passos:'1) Open the login screen. 2) Select any user. 3) Type any single character as the password (letter, number, or space). 4) Log in.',
+      atual:"Login is accepted with any non-empty password, regardless of whether it's correct. Confirmed with Cypress: the test types 1 wrong character and expects the header NOT to exist — it fails after 4s of retrying (AssertionError: Timed out retrying after 4000ms: Expected &lt;header.topbar&gt; not to exist in the DOM, but it was continuously found), proving login was accepted anyway. This same mechanism is reused in the automated tests for BUG-003 and BUG-004.",
+      esperado:'Compare the submitted password with the stored one and reject incorrect passwords.',
+      confirmacao:['Manual · 5 seed users + new account', 'Automated · Cypress'],
+      obs:"Combined with BUG-006 (public directory), it's exploitable with zero effort spent guessing an email." },
+    { id:'BUG-006', etapa:'2. Login', titulo:'User directory publicly exposed with no login required', sev:'alta', camada:'Back-end', tipo:'cinza', categoria:'seguranca',
+      evidencia:"server/routes/auth.js:9-15 — GET /api/auth/directory is a public route, with no requireAuth, and returns everyone's name/role/email.",
+      passos:'1) Without being logged in, open a new tab. 2) Type into the address bar: http://localhost:3000/api/auth/directory. 3) Press Enter.',
+      atual:'Returns the full user list (patients included) with no login required.',
+      esperado:"The login selector shouldn't expose email addresses or reveal who is a patient; a typed-in email field would solve this without the leak.",
+      confirmacao:['Manual', 'Automated · Cypress/Postman'],
+      obs:"DIFFERENT from the others: this is a deliberate design decision (confirmed by a code comment), not a coding mistake — but with a real security side effect, and it's what makes BUG-005 trivial to exploit." },
+    { id:'BUG-007', etapa:'2. Login', titulo:'Production data reset with no authentication', sev:'alta', camada:'Back-end', tipo:'preta', categoria:'seguranca',
+      evidencia:'server/index.js:35-38 — POST /api/admin/reset calls seedDatabase() (wipes everything) without going through requireAuth.',
+      passos:'1) Without logging in, click "Reset system data" on the home screen. 2) Confirm in the modal (OK).',
+      atual:'The entire database is wiped and recreated, with no login required and no server-side confirmation.',
+      esperado:"Destructive endpoints shouldn't exist without administrator authentication/authorization.",
+      confirmacao:['Manual', 'Automated · Cypress/Postman'],
+      obs:'A code comment admits it is intentional "for the class" — it still counts as a QA finding regardless.' },
+    { id:'BUG-008', etapa:'3. Post-login (Patients)', titulo:"IDOR — any user can read any patient's data", sev:'critica', camada:'Back-end', tipo:'cinza', categoria:'seguranca',
+      evidencia:"server/routes/patients.js:32-47 — GET /api/patients/:id only requires requireAuth, and never checks whether the logged-in user is linked to the requested :id.",
+      passos:"1) Log in as Marina Souza (patient). 2) In a new tab of the same browser, type: http://localhost:3000/api/patients/pac2 (another patient's id, Roberto's).",
+      atual:'Returns the full medical record (private clinical notes, vitals, alerts, prescriptions) of any patient, with no relationship check.',
+      esperado:"A patient should only see their own data; a nurse/doctor should only see their own assigned patients (the same rule is already applied in GET /api/patients, but not replicated here).",
+      confirmacao:['Manual · curl', 'Automated · Cypress/Postman'],
+      obs:'Confirmed with a real private clinical note leaked: "COPD under follow-up... Penicillin allergy".' },
+    { id:'BUG-009', etapa:'4. Nursing (Vitals)', titulo:'Inconsistent temperature unit (°F on screen, °C in the rule)', sev:'alta', camada:'Front-end + Back-end', tipo:'preta', categoria:'funcional',
+      evidencia:"public/app.js:322,219 label the field °F; public/app.js:500 (doctor's thresholds screen) labels it °C; server/lib/rules.js:19 compares the raw value with no conversion; the seed uses Celsius values (temp_high: 37.8).",
+      passos:'1) Log in as Camila Duarte (nurse), any password. 2) Select Marina. 3) Record Temp. = 98 (the field says "°F"), everything else normal. 4) Check the Alerts tab.',
+      atual:'The system compares 98 directly against the 37.8 threshold (Celsius) and fires a fever alert on every normal reading.',
+      esperado:"Standardize everything in °C (consistent with the seeded thresholds); fix the nursing screen's field label.",
+      confirmacao:['Manual', 'Automated · Cypress'],
+      obs:'The "°F" label is likely left over from a system originally designed in English/for the US.' },
+    { id:'BUG-010', etapa:'4. Nursing (Vitals)', titulo:'No range validation on vital signs (accepts negative/absurd values)', sev:'alta', camada:'Front-end + Back-end', tipo:'preta', categoria:'funcional',
+      evidencia:"public/app.js:377 (the form doesn't validate) + server/routes/patients.js:51-64 (only runs Number(), with no physical-limit check).",
+      passos:'1) Log in as Camila Duarte, select Marina. 2) Record HR = -50 (everything else normal). 3) Check the History.',
+      atual:'The value is accepted and stored normally, feeding into both the history and the alert calculation.',
+      esperado:'A physiologically plausible range validation on the front end (immediate feedback) and on the back end (defense in depth).',
+      confirmacao:['Manual', 'Automated · Cypress'], obs:'' },
+    { id:'BUG-011', etapa:'4. Nursing (Vitals)', titulo:'High HR threshold uses > instead of >= (off-by-one boundary error)', sev:'media', camada:'Back-end', tipo:'preta', categoria:'funcional',
+      evidencia:'server/lib/rules.js:16 — the specification says "HR >= 100 triggers a HIGH alert", but the implementation uses v.hr > patient.hr_high.',
+      passos:'1) Log in as Camila Duarte, select Marina (HR threshold = 100). 2) Record HR = 100 (exactly at the threshold). 3) Check the Alerts tab — compare afterward with HR = 101.',
+      atual:'No alert fires, contradicting the specified rule.',
+      esperado:'Use >= instead of > in the comparison.',
+      confirmacao:['Automated · Cypress'], obs:'' },
+    { id:'BUG-012', etapa:'4. Nursing (Vitals)', titulo:'Duplicate alerts when the same vital sign is recorded repeatedly', sev:'media', camada:'Back-end', tipo:'preta', categoria:'funcional',
+      evidencia:'server/lib/rules.js:22-24 — no duplicate/cooldown check before inserting a new alert.',
+      passos:'1) Log in as nurse Camila Duarte (camila@medalert.test, any password), select Marina, record a reading outside the normal range (e.g., HR=110). 2) Record the EXACT same reading again, right after. (A single reading on its own just creates 1 normal alert — not a bug; the bug only shows up on the 2nd time.)',
+      atual:"It creates two identical alerts in the list, cluttering the nursing/doctor view. Confirmed live via API: two POST /vitals calls with the same payload each return newAlerts:1, resulting in 2 identical rows in the patient's alerts array.",
+      esperado:'Check whether an identical pending alert already exists before creating a new one.',
+      confirmacao:['Automated · Cypress ("Found 2, expected 1")'],
+      obs:'Optional suggestion (not required to fix): when a duplicate is detected, show a toast/warning to nursing staff (e.g., "This alert is already pending for this patient") instead of silently ignoring the new record — the minimal fix is just having the back end not insert the repeated alert.' },
+    { id:'BUG-013', etapa:'5. Alert Management', titulo:'Automatic escalation of critical alerts never happens', sev:'alta', camada:'Back-end', tipo:'branca', categoria:'funcional',
+      evidencia:'server/lib/rules.js:32-41 — checkAutoEscalation() implements the rule but is never called from any route or scheduler (dead code). The seed deliberately creates a critical alert that is 35 minutes old to prove this.',
+      passos:'1) Click "Reset system data" (recreates the alert already "pretending" to be 35 minutes old). 2) Log in as Paulo Ferreira (Roberto\'s nurse). 3) Select Roberto. 4) Check the Alerts tab — the critical SpO2 alert should already be "Escalated", but shows "Pending".',
+      atual:'The status stays "pending" indefinitely; it never turns into "escalated" on its own.',
+      esperado:'Critical alerts pending for more than 15 minutes should escalate automatically.',
+      confirmacao:['Automated · Cypress'], obs:'' },
+    { id:'BUG-014', etapa:'5. Alert Management', titulo:'An alert can be "acknowledged" more than once', sev:'media', camada:'Back-end', tipo:'cinza', categoria:'integridade',
+      evidencia:"server/routes/alerts.js:9-18 — POST /:id/acknowledge doesn't check the current status before overwriting acknowledged_at/acknowledged_by.",
+      passos:'1) Log in as nurse Camila Duarte (camila@medalert.test, any password) — the "Acknowledge" button only exists on the nurse screen. 2) Select Marina and generate an alert (e.g., HR=110). 3) On the Alerts tab, click "Acknowledge". 4) Click "Acknowledge" AGAIN, on the same already-acknowledged alert. (You need to acknowledge it twice; the first time alone works normally and is not a bug.)',
+      atual:'The 2nd "Acknowledge" overwrites who/when actually acknowledged it first, losing the original record — as if the first acknowledgment never happened.',
+      esperado:'Block or warn when trying to acknowledge an already-acknowledged alert, preserving the original record.',
+      confirmacao:['Automated · Cypress (timestamp comparison via API)'], obs:'' },
+    { id:'BUG-015', etapa:'5. Alert Management', titulo:'No flow control between Acknowledge/Escalate (inconsistent status and audit trail)', sev:'media', camada:'Back-end', tipo:'cinza', categoria:'integridade',
+      evidencia:'server/routes/alerts.js — acknowledge (9-18) and escalate (20-26) have no awareness of each other; there is no state machine; escalate never clears acknowledged_at/by.',
+      passos:'1) Log in as Camila, select Marina, generate an alert (e.g., HR=110). 2) Click Acknowledge. 3) Click Escalate to doctor (same alert). 4) Click Acknowledge again (same alert). Watch the status change on every click, with no fixed order.',
+      atual:'The status freely flips between "acknowledged" and "escalated"; an "escalated" alert can keep showing "acknowledged by So-and-so" at the same time.',
+      esperado:'A clear state machine (pending -> acknowledged -> escalated) and clearing of audit fields on transitions.',
+      confirmacao:['Manual · real sequence tested', 'Automated · Cypress'],
+      obs:'Different from BUG-014: here the problem is between DIFFERENT statuses, not duplicating the same one.' },
+    { id:'BUG-016', etapa:'5. Alert Management', titulo:'The "pending alerts" counter at the top goes stale', sev:'baixa', camada:'Front-end', tipo:'preta', categoria:'usabilidade',
+      evidencia:"public/app.js:285-298 — countPendingForMyPatients() only recalculates on a full render (login/switching patient), not after creating/acknowledging an alert on the same screen.",
+      passos:'1) Log in as Camila. 2) Note the "Pending alerts" number at the top (0). 3) Without switching patients, record a reading outside the normal range (e.g., HR=110). 4) Look at the number again, without reloading the page.',
+      atual:'The "Pending alerts: N" badge keeps showing the old number.',
+      esperado:'The counter should reflect the new alert immediately.',
+      confirmacao:['Automated · Cypress'], obs:'' },
+    { id:'BUG-017', etapa:'5. Alert Management', titulo:'The "Acknowledge" alert button does not ask for confirmation', sev:'baixa', camada:'Front-end', tipo:'preta', categoria:'usabilidade',
+      evidencia:'public/app.js:383-389 — onclick calls api.acknowledge(...) directly, with no confirm()/modal. "Escalate" (390-396) has the same problem.',
+      passos:'1) Log in as nurse Camila Duarte (camila@medalert.test, any password). 2) Select Marina and generate an alert (record a reading outside the normal range, e.g., HR=110). 3) On the Alerts tab, click "Acknowledge".',
+      atual:'The action is carried out immediately, with no chance to cancel.',
+      esperado:'Confirm before acting, the same pattern already used by the "Reset system data" link.',
+      confirmacao:['Automated · Cypress (window.confirm stub never called)'],
+      obs:'Combined with BUG-014: an accidental click can silently erase the record of who acknowledged it before.' },
+    { id:'BUG-018', etapa:'6. Doctor (Thresholds/Prescription/Discharge)', titulo:'IDOR — any user can modify/discharge/prescribe for any patient', sev:'critica', camada:'Back-end', tipo:'cinza', categoria:'seguranca',
+      evidencia:'server/routes/patients.js — the same missing relationship check in POST /:id/vitals, PUT /:id/thresholds, POST /:id/prescriptions, POST /:id/discharge, POST /:id/call-nurse.',
+      passos:'1) Log in as Marina (patient). 2) Open the browser console (F12 → Console tab). 3) Paste: fetch("/api/patients/pac2/discharge",{method:"POST"}).then(r=>r.json()).then(console.log) and press Enter. 4) Afterward, click "Reset system data" to undo it.',
+      atual:'Marina (a regular patient) is able to change thresholds, log fake vitals, and DISCHARGE Roberto — confirmed live, the status actually flipped to "discharged".',
+      esperado:"Validate the user's role and their relationship to the patient on every action.",
+      confirmacao:['Manual · real sequence, side effect confirmed', 'Automated · Cypress/Postman'],
+      obs:'The database was restored via reset after the manual test.' },
+    { id:'BUG-019', etapa:'6. Doctor (Thresholds/Prescription/Discharge)', titulo:'Prescription "saved successfully" with no patient selected (silent failure)', sev:'alta', camada:'Front-end + Back-end', tipo:'preta', categoria:'funcional',
+      evidencia:'public/app.js:439-440,568 (the tab is accessible and submits even with d===null) + server/routes/patients.js:82-93 (responds with 201 success even with no valid :id, and no error else-branch).',
+      passos:'1) Sign up a new doctor account (Sign up screen). 2) Log in with this account (with no patient linked at all). 3) Click straight into the "Prescription" tab, without selecting a patient. 4) Fill it in and submit.',
+      atual:'A success toast appears, but nothing is persisted to the database — the prescription silently disappears.',
+      esperado:"The front end shouldn't allow submitting with no patient selected; the back end should return a 400/404 error.",
+      confirmacao:['Automated · Cypress'], obs:'' },
+    { id:'BUG-020', etapa:'6. Doctor (Thresholds/Prescription/Discharge)', titulo:'Patient discharge with no confirmation screen', sev:'baixa', camada:'Front-end', tipo:'preta', categoria:'usabilidade',
+      evidencia:'public/app.js:532-540 — the "Discharge" button calls the API directly in its onclick, with no confirm()/modal (unlike the "Reset data" link, which does confirm).',
+      passos:'1) Log in as Dr. Helena Prado (doctor), select a patient. 2) Click "Discharge patient".',
+      atual:'The discharge is carried out immediately, with no chance to cancel.',
+      esperado:'Confirm before an irreversible action.',
+      confirmacao:['Automated · Cypress'], obs:'' },
+    { id:'BUG-021', etapa:'6. Doctor (Thresholds/Prescription/Discharge)', titulo:'The "Discharge" button still looks active even when disabled', sev:'baixa', camada:'Front-end', tipo:'preta', categoria:'visual',
+      evidencia:'public/app.js:459 (disabled is applied correctly) + public/styles.css (no :disabled rule at all; .btn-danger keeps its solid color; the global cursor:pointer is never overridden).',
+      passos:'1) Log in as Dr. Helena Prado, select a patient. 2) Note the color of the "Discharge patient" button before clicking. 3) Click it. 4) Compare the button\'s color before/after.',
+      atual:'The button becomes functionally inactive (disabled=true, correct), but looks visually identical to before — same red color, same clickable cursor.',
+      esperado:'A clear visual signal: reduced opacity/gray, different text, or removing the button.',
+      confirmacao:['Automated · Cypress (identical CSS color before/after)'], obs:'' },
+
+  ];
+
+  // ---------- Stat strip ----------
+  const statsEl = document.getElementById('stats');
+  const counts = { critica: 0, alta: 0, media: 0, baixa: 0 };
+  BUGS.forEach((b) => counts[b.sev]++);
+  const totalStat = document.createElement('div');
+  totalStat.className = 'stat';
+  totalStat.innerHTML = `<div class="n">${BUGS.length}</div><div class="l">Total</div>`;
+  statsEl.appendChild(totalStat);
+  SEV_ORDER.forEach((sev) => {
+    const el = document.createElement('div');
+    el.className = 'stat';
+    el.dataset.sev = sev;
+    el.innerHTML = `<div class="n">${counts[sev]}</div><div class="l">${SEV_LABEL[sev]}</div>`;
+    statsEl.appendChild(el);
+  });
+
+  // ---------- Severity filter chips ----------
+  const chipRow = document.getElementById('sevFilters');
+  let activeSev = 'todas';
+  function renderChips() {
+    chipRow.innerHTML = '';
+    const all = document.createElement('button');
+    all.className = 'chip'; all.type = 'button'; all.textContent = 'All';
+    all.setAttribute('aria-pressed', String(activeSev === 'todas'));
+    all.onclick = () => { activeSev = 'todas'; renderChips(); applyFilters(); };
+    chipRow.appendChild(all);
+    SEV_ORDER.forEach((sev) => {
+      const b = document.createElement('button');
+      b.className = 'chip'; b.type = 'button'; b.textContent = SEV_LABEL[sev];
+      b.setAttribute('aria-pressed', String(activeSev === sev));
+      b.onclick = () => { activeSev = sev; renderChips(); applyFilters(); };
+      chipRow.appendChild(b);
+    });
+  }
+
+  // ---------- Sections + cards ----------
+  const sectionsEl = document.getElementById('sections');
+  const etapas = [...new Set(BUGS.map((b) => b.etapa))];
+  const cardEls = [];
+  const mediaStrips = {};   // bugId -> .media-strip element
+  const mediaAdds = {};     // bugId -> .media-add element
+
+  etapas.forEach((etapa) => {
+    const sec = document.createElement('section');
+    sec.className = 'etapa';
+    const h2 = document.createElement('h2');
+    h2.textContent = etapa;
+    sec.appendChild(h2);
+    const cardsWrap = document.createElement('div');
+    cardsWrap.className = 'cards';
+
+    BUGS.filter((b) => b.etapa === etapa).forEach((b) => {
+      const det = document.createElement('details');
+      det.className = 'bug';
+      det.dataset.sev = b.sev;
+      det.open = b.sev === 'critica';
+
+      const confirmBadges = b.confirmacao.map((c) => `<span class="confirm-badge">${c}</span>`).join('');
+
+      det.innerHTML = `
+        <summary class="bug-head">
+          <span class="id">${b.id}</span>
+          <span class="sev-chip">${SEV_LABEL[b.sev]}</span>
+          <span class="camada-tag">${b.camada}</span>
+          <span class="tipo-tag" data-tipo="${b.tipo}">${TIPO_LABEL[b.tipo]}</span>
+          <span class="categoria-tag">${CATEGORIA_LABEL[b.categoria]}</span>
+          <span class="bug-title">${b.titulo}</span>
+        </summary>
+        <div class="bug-body">
+          <div class="field evidencia"><label>Evidence in code</label><p>${b.evidencia}</p></div>
+          <div class="field"><label>Steps to reproduce</label><p>${b.passos}</p></div>
+          <div class="field"><label>Actual result</label><p>${b.atual}</p></div>
+          <div class="field"><label>Expected result</label><p>${b.esperado}</p></div>
+          <div class="field"><label>Confirmation</label><div class="confirm-row">${confirmBadges}</div></div>
+          ${b.obs ? `<p class="obs">${b.obs}</p>` : ''}
+          <div class="field">
+            <label>Evidence (screenshot/video)</label>
+            <div class="media-strip" data-bug="${b.id}"></div>
+          </div>
+        </div>`;
+
+      cardsWrap.appendChild(det);
+      cardEls.push({ el: det, sec, data: b });
+      mediaStrips[b.id] = det.querySelector('.media-strip');
+    });
+
+    sec.appendChild(cardsWrap);
+    sectionsEl.appendChild(sec);
+  });
+
+  // ---------- Filtering ----------
+  const searchInput = document.getElementById('search');
+  const emptyMsg = document.getElementById('emptyMsg');
+
+  function applyFilters() {
+    const q = searchInput.value.trim().toLowerCase();
+    let visibleCount = 0;
+    const sectionHasVisible = new Map();
+
+    cardEls.forEach(({ el, sec, data }) => {
+      const matchesSev = activeSev === 'todas' || data.sev === activeSev;
+      const haystack = (data.id + ' ' + data.titulo + ' ' + data.evidencia + ' ' + data.atual + ' ' + TIPO_LABEL[data.tipo] + ' ' + CATEGORIA_LABEL[data.categoria]).toLowerCase();
+      const matchesQuery = !q || haystack.includes(q);
+      const visible = matchesSev && matchesQuery;
+      el.hidden = !visible;
+      if (visible) {
+        visibleCount++;
+        sectionHasVisible.set(sec, true);
+      }
+    });
+
+    [...new Set(cardEls.map((c) => c.sec))].forEach((sec) => {
+      sec.hidden = !sectionHasVisible.get(sec);
+    });
+
+    emptyMsg.style.display = visibleCount === 0 ? 'block' : 'none';
+  }
+
+  searchInput.addEventListener('input', applyFilters);
+  renderChips();
+  applyFilters();
+
+  // ---------- Lightbox ----------
+  const lightbox = document.getElementById('lightbox');
+  const lightboxContent = document.getElementById('lightboxContent');
+  function openLightbox(item) {
+    lightboxContent.innerHTML = item.kind === 'video'
+      ? `<video src="/_blob/${item.id}" controls autoplay></video>`
+      : `<img src="/_blob/${item.id}" alt="Evidence">`;
+    lightbox.hidden = false;
+  }
+  function closeLightbox() {
+    lightbox.hidden = true;
+    lightboxContent.innerHTML = '';
+  }
+  document.getElementById('lightboxClose').onclick = closeLightbox;
+
+  // ---------- Toast (replaces alert(), which can get blocked inside the artifact iframe) ----------
+  const toastEl = document.getElementById('toast');
+  let toastTimer = null;
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toastEl.hidden = true; }, 3500);
+  }
+  lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !lightbox.hidden) closeLightbox(); });
+
+  // ---------- Evidence media: assets + db ----------
+  function renderMediaStrip(bugId, items, canWrite) {
+    const strip = mediaStrips[bugId];
+    if (!strip) return;
+    strip.innerHTML = '';
+
+    (items || []).forEach((item) => {
+      const thumb = document.createElement('div');
+      thumb.className = 'media-thumb';
+      thumb.tabIndex = 0;
+      thumb.setAttribute('role', 'button');
+      thumb.setAttribute('aria-label', item.kind === 'video' ? 'Open video' : 'Open screenshot');
+      thumb.innerHTML = item.kind === 'video'
+        ? `<video src="/_blob/${item.id}" muted></video><span class="play-badge">▶</span>`
+        : `<img src="/_blob/${item.id}" alt="Evidence" loading="lazy">`;
+      const open = () => openLightbox(item);
+      thumb.addEventListener('click', open);
+      thumb.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+
+      if (canWrite) {
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'del-btn';
+        del.textContent = '✕';
+        del.setAttribute('aria-label', 'Delete this evidence');
+        del.addEventListener('click', (e) => {
+          e.stopPropagation();
+          del.dataset.busy = 'true';
+          deleteEvidencia(bugId, item.id, del);
+        });
+        thumb.appendChild(del);
+      }
+
+      strip.appendChild(thumb);
+    });
+
+    if (canWrite) {
+      const add = document.createElement('label');
+      add.className = 'media-add';
+      add.innerHTML = `+ photo/video<input type="file" accept="${ACCEPTED_TYPES}">`;
+      const input = add.querySelector('input');
+      input.addEventListener('change', () => {
+        const file = input.files && input.files[0];
+        if (file) uploadEvidencia(bugId, file, add);
+        input.value = '';
+      });
+      strip.appendChild(add);
+    } else if (!items || items.length === 0) {
+      const hint = document.createElement('span');
+      hint.className = 'media-empty-hint';
+      hint.textContent = 'No screenshot/video attached yet.';
+      strip.appendChild(hint);
+    }
+  }
+
+  (async function initEvidence() {
+    let dbCap = null, assetsCap = null;
+    try { dbCap = await window.claude?.use?.('db'); } catch (e) { dbCap = null; }
+    try { assetsCap = await window.claude?.use?.('assets'); } catch (e) { assetsCap = null; }
+
+    const canWrite = !!assetsCap && !!dbCap;
+    const mediaByBug = {};
+
+    // Render empty strips right away so the page never looks broken while capabilities load.
+    Object.keys(mediaStrips).forEach((bugId) => renderMediaStrip(bugId, [], canWrite));
+
+    if (!dbCap) return; // no persistence available in this view — strips stay empty/read-only
+
+    window._addEvidencia = async function uploadEvidenciaImpl(bugId, file, addEl) {
+      if (!assetsCap) return;
+      if (addEl) addEl.dataset.busy = 'true';
+      try {
+        const result = await assetsCap.upload(file);
+        const kind = result.contentType.indexOf('video/') === 0 ? 'video' : 'image';
+        const ref = dbCap.doc('evidencias/' + bugId);
+        const snap = await ref.get();
+        const existing = (snap.exists && Array.isArray(snap.data().items)) ? snap.data().items : [];
+        const items = existing.concat([{ id: result.id, contentType: result.contentType, kind, addedAt: new Date().toISOString() }]);
+        await ref.set({ items });
+      } catch (err) {
+        showToast("Couldn't upload the file: " + (err && err.message ? err.message : 'unknown error'));
+      } finally {
+        if (addEl) addEl.dataset.busy = 'false';
+      }
+    };
+
+    window._deleteEvidencia = async function deleteEvidenciaImpl(bugId, assetId, delEl) {
+      if (!assetsCap) return;
+      try {
+        const ref = dbCap.doc('evidencias/' + bugId);
+        const snap = await ref.get();
+        const existing = (snap.exists && Array.isArray(snap.data().items)) ? snap.data().items : [];
+        await ref.set({ items: existing.filter((it) => it.id !== assetId) });
+        await assetsCap.delete(assetId);
+      } catch (err) {
+        showToast("Couldn't delete: " + (err && err.message ? err.message : 'unknown error'));
+      } finally {
+        if (delEl) delEl.dataset.busy = 'false';
+      }
+    };
+
+    dbCap.collection('evidencias').onSnapshot(
+      (qs) => {
+        qs.docs.forEach((doc) => {
+          const data = doc.data();
+          mediaByBug[doc.id] = (data && Array.isArray(data.items)) ? data.items : [];
+        });
+        Object.keys(mediaStrips).forEach((bugId) => {
+          renderMediaStrip(bugId, mediaByBug[bugId] || [], canWrite);
+        });
+      },
+      () => { /* db unavailable mid-session — strips just stop updating live */ }
+    );
+  })();
+
+  function uploadEvidencia(bugId, file, addEl) {
+    if (window._addEvidencia) window._addEvidencia(bugId, file, addEl);
+  }
+
+  function deleteEvidencia(bugId, assetId, delEl) {
+    if (window._deleteEvidencia) window._deleteEvidencia(bugId, assetId, delEl);
+  }
+})();
+</script>
+

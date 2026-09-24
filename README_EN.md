@@ -141,4 +141,4 @@ The [.github/workflows/cypress.yml](.github/workflows/cypress.yml) workflow runs
 
   **Reading the result:** all 3 scenarios closed with **0% errors** and latency well under target in every case — including `spike`, where the system took an abrupt jump from 5 to 100 concurrent users and kept responding in ~1ms, with no timeouts or failures. For this system, performance doesn't appear to be a real bottleneck risk — the serious problems found in this project are security and business-rule bugs (see [BUGS_EN.md](BUGS_EN.md)), not load capacity.
 - **Excel:** `BUGS.xlsx` — the same content as BUGS.md, in spreadsheet form.
-- **Interactive site:** published bug log with filtering, search, and evidence upload (link shared separately).
+- **Interactive site:** published bug log with filtering, search, and evidence upload — [PT](https://claude.ai/artifact/2mYWCDe2fXeRkMBWaBjDFg) · [EN](https://claude.ai/artifact/M947KJzfsQZ6fRUeo6KMHQ). Source code in [site/](site/).

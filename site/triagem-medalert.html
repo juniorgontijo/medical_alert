@@ -1,0 +1,889 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Triagem MedAlert</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --paper: #eef2f1;
+    --paper-raised: #ffffff;
+    --ink: #16232b;
+    --ink-soft: #4a5a63;
+    --ink-faint: #7c8b92;
+    --line: #d7dede;
+    --brand: #1f6f78;
+    --brand-soft: #e4f1f1;
+    --sev-critica: #c0392b;   --sev-critica-bg: #fbeae7;
+    --sev-alta:    #b8631d;  --sev-alta-bg:    #fbeee0;
+    --sev-media:   #93761c;  --sev-media-bg:   #faf3dc;
+    --sev-baixa:   #3f6b76;  --sev-baixa-bg:   #e7eff0;
+    --tag-bg: #eef1f0;
+    --tag-ink: #56666d;
+    --shadow: 0 1px 2px rgba(22,35,43,.06), 0 6px 20px -8px rgba(22,35,43,.18);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #10181c;
+      --paper-raised: #1a252b;
+      --ink: #e8edee;
+      --ink-soft: #a2b0b5;
+      --ink-faint: #6f8086;
+      --line: #2b383e;
+      --brand: #56b7bf;
+      --brand-soft: #17383c;
+      --sev-critica: #e78376;   --sev-critica-bg: #3a2420;
+      --sev-alta:    #e0a869;  --sev-alta-bg:    #3a2d18;
+      --sev-media:   #d6c078;  --sev-media-bg:   #352e16;
+      --sev-baixa:   #86b3bc;  --sev-baixa-bg:   #1b2c30;
+      --tag-bg: #202b30;
+      --tag-ink: #9db0b6;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 26px -10px rgba(0,0,0,.55);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #10181c;
+    --paper-raised: #1a252b;
+    --ink: #e8edee;
+    --ink-soft: #a2b0b5;
+    --ink-faint: #6f8086;
+    --line: #2b383e;
+    --brand: #56b7bf;
+    --brand-soft: #17383c;
+    --sev-critica: #e78376;   --sev-critica-bg: #3a2420;
+    --sev-alta:    #e0a869;  --sev-alta-bg:    #3a2d18;
+    --sev-media:   #d6c078;  --sev-media-bg:   #352e16;
+    --sev-baixa:   #86b3bc;  --sev-baixa-bg:   #1b2c30;
+    --tag-bg: #202b30;
+    --tag-ink: #9db0b6;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 26px -10px rgba(0,0,0,.55);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    line-height: 1.5;
+    padding-inline: 20px;
+    padding-block: 28px 60px;
+  }
+  code, .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+
+  .wrap { max-width: 980px; margin-inline: auto; }
+
+  /* ---------- Header / stat strip ---------- */
+  header.top { margin-bottom: 20px; }
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--brand);
+    margin: 0 0 6px;
+  }
+  h1 {
+    font-size: clamp(28px, 5vw, 40px);
+    font-weight: 700;
+    margin: 0 0 8px;
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+  .subtitle { color: var(--ink-soft); font-size: 15px; max-width: 62ch; margin: 0 0 22px; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .stat {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 10px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .stat .n { font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: 11px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .05em; margin-top: 2px; }
+  .stat[data-sev="critica"] .n { color: var(--sev-critica); }
+  .stat[data-sev="alta"] .n    { color: var(--sev-alta); }
+  .stat[data-sev="media"] .n   { color: var(--sev-media); }
+  .stat[data-sev="baixa"] .n   { color: var(--sev-baixa); }
+
+  @media (max-width: 560px) {
+    .stats { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  /* ---------- Glossário ---------- */
+  .glossary {
+    background: var(--brand-soft);
+    border: 1px solid var(--brand);
+    border-radius: 10px;
+    padding: 4px 16px;
+    margin-bottom: 4px;
+  }
+  .glossary summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 10px 0;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--brand);
+  }
+  .glossary summary::-webkit-details-marker { display: none; }
+  .glossary-body { padding: 2px 0 14px; display: flex; flex-direction: column; gap: 10px; }
+  .glossary-body p { margin: 0; font-size: 13px; color: var(--ink-soft); line-height: 1.55; }
+  .glossary-body strong { color: var(--ink); }
+  .glossary-body code { font-family: 'IBM Plex Mono', monospace; font-size: 12px; background: var(--paper); padding: 1px 5px; border-radius: 4px; }
+
+  /* ---------- Controls ---------- */
+  .controls {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--paper);
+    padding-block: 10px;
+    margin-bottom: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+  }
+  #search {
+    flex: 1 1 200px;
+    min-width: 0;
+    font: inherit;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--paper-raised);
+    color: var(--ink);
+  }
+  #search:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--paper-raised);
+    color: var(--ink-soft);
+    cursor: pointer;
+    user-select: none;
+  }
+  .chip:hover { border-color: var(--brand); color: var(--ink); }
+  .chip[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .chip:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  /* ---------- Sections ---------- */
+  section.etapa { margin-bottom: 30px; }
+  .etapa h2 {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--ink-faint);
+    margin: 0 0 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  .cards { display: flex; flex-direction: column; gap: 8px; }
+
+  /* ---------- Bug card ---------- */
+  details.bug {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--sev-c, var(--ink-faint));
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  details.bug[data-sev="critica"] { --sev-c: var(--sev-critica); }
+  details.bug[data-sev="alta"]    { --sev-c: var(--sev-alta); }
+  details.bug[data-sev="media"]   { --sev-c: var(--sev-media); }
+  details.bug[data-sev="baixa"]   { --sev-c: var(--sev-baixa); }
+
+  summary.bug-head {
+    list-style: none;
+    cursor: pointer;
+    padding: 13px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  summary.bug-head::-webkit-details-marker { display: none; }
+  summary.bug-head::before {
+    content: '▸';
+    font-size: 12px;
+    color: var(--ink-faint);
+    transition: transform .15s ease;
+    flex: 0 0 auto;
+  }
+  details[open] > summary.bug-head::before { transform: rotate(90deg); }
+
+  .id { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; color: var(--ink-faint); flex: 0 0 auto; }
+  .sev-chip {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 999px;
+    flex: 0 0 auto;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+  }
+  details[data-sev="critica"] .sev-chip { background: var(--sev-critica-bg); color: var(--sev-critica); }
+  details[data-sev="alta"] .sev-chip    { background: var(--sev-alta-bg); color: var(--sev-alta); }
+  details[data-sev="media"] .sev-chip   { background: var(--sev-media-bg); color: var(--sev-media); }
+  details[data-sev="baixa"] .sev-chip   { background: var(--sev-baixa-bg); color: var(--sev-baixa); }
+
+  .camada-tag {
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--tag-bg);
+    color: var(--tag-ink);
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .tipo-tag {
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    padding: 3px 9px;
+    border-radius: 999px;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    border: 1px solid currentColor;
+  }
+  .tipo-tag[data-tipo="preta"]  { color: var(--ink-faint); background: var(--tag-bg); }
+  .tipo-tag[data-tipo="cinza"]  { color: var(--sev-baixa); background: var(--sev-baixa-bg); }
+  .tipo-tag[data-tipo="branca"] { color: var(--sev-alta); background: var(--sev-alta-bg); }
+  .categoria-tag {
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    background: var(--brand-soft);
+    color: var(--brand);
+  }
+  .bug-title { font-size: 14px; font-weight: 500; flex: 1 1 240px; min-width: 0; }
+
+  .bug-body { padding: 4px 16px 18px 34px; display: flex; flex-direction: column; gap: 14px; }
+  .field > label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--ink-faint);
+    margin-bottom: 4px;
+  }
+  .field > p, .field > div { font-size: 13.5px; color: var(--ink); margin: 0; }
+  .field.evidencia > p, .field.evidencia > div { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--ink-soft); background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; overflow-x: auto; }
+  .confirm-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .confirm-badge {
+    font-size: 11.5px;
+    font-family: 'IBM Plex Mono', monospace;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--brand-soft);
+    color: var(--brand);
+    border: 1px solid var(--brand);
+  }
+  .obs { font-size: 13px; color: var(--ink-soft); font-style: italic; }
+
+  /* ---------- Evidência de mídia (prints/vídeos) ---------- */
+  .media-strip { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .media-thumb {
+    position: relative;
+    width: 84px; height: 84px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    cursor: pointer;
+    flex: 0 0 auto;
+  }
+  .media-thumb img, .media-thumb video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .media-thumb .play-badge {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,.28);
+    color: #fff; font-size: 20px;
+    pointer-events: none;
+  }
+  .media-thumb:hover { border-color: var(--brand); }
+  .media-thumb:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .media-thumb .del-btn {
+    position: absolute; top: 3px; right: 3px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: rgba(0,0,0,.6);
+    color: #fff;
+    border: none;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0;
+    transition: opacity .12s ease, background .12s ease;
+  }
+  .media-thumb:hover .del-btn,
+  .media-thumb:focus-within .del-btn,
+  .media-thumb .del-btn:focus-visible { opacity: 1; }
+  .media-thumb .del-btn:hover { background: var(--sev-critica); }
+  .media-thumb .del-btn[data-busy="true"] { opacity: 1; pointer-events: none; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+    background: var(--ink); color: var(--paper);
+    font-size: 13px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    z-index: 60;
+    max-width: min(420px, calc(100vw - 32px));
+    text-align: center;
+  }
+  .toast[hidden] { display: none; }
+
+  .media-add {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    font-size: 12.5px;
+    color: var(--brand);
+    border: 1px dashed var(--brand);
+    background: var(--brand-soft);
+    border-radius: 8px;
+    padding: 0 12px;
+    height: 84px;
+    width: 84px;
+    text-align: center;
+    cursor: pointer;
+    flex: 0 0 auto;
+    line-height: 1.25;
+  }
+  .media-add:hover { background: var(--brand); color: #fff; }
+  .media-add input[type="file"] { display: none; }
+  .media-add[data-busy="true"] { opacity: .6; pointer-events: none; }
+  .media-empty-hint { font-size: 12px; color: var(--ink-faint); }
+
+  .empty-msg { display: none; text-align: center; color: var(--ink-faint); padding: 30px 0; font-size: 14px; }
+
+  footer.note {
+    margin-top: 34px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+    color: var(--ink-faint);
+  }
+  footer.note h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-soft); margin: 0 0 8px; }
+  footer.note ul { margin: 0; padding-left: 18px; }
+  footer.note li { margin-bottom: 6px; }
+
+  /* ---------- Lightbox ---------- */
+  .lightbox {
+    position: fixed; inset: 0;
+    background: rgba(8,12,14,.86);
+    display: flex; align-items: center; justify-content: center;
+    padding: 28px;
+    z-index: 50;
+  }
+  .lightbox[hidden] { display: none; }
+  .lightbox img, .lightbox video { max-width: 100%; max-height: 100%; border-radius: 8px; display: block; }
+  .lightbox-close {
+    position: fixed; top: 18px; right: 20px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    background: rgba(255,255,255,.12);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,.4);
+    border-radius: 8px;
+    padding: 7px 13px;
+    cursor: pointer;
+  }
+  .lightbox-close:hover { background: rgba(255,255,255,.22); }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow">Relatório de QA · Sistema MedAlert</p>
+    <h1>Triagem de bugs</h1>
+    <p class="subtitle">21 bugs encontrados por teste manual + revisão de código, organizados como uma ficha de triagem: por gravidade clínica e pela ordem em que aparecem no uso real do sistema — cadastro → login → pacientes → enfermagem → alertas → médico.</p>
+
+    <div class="stats" id="stats"></div>
+
+    <details class="glossary">
+      <summary>📖 Glossário rápido — termos técnicos usados abaixo (clique pra abrir)</summary>
+      <div class="glossary-body">
+        <p><strong>Console do navegador (DevTools):</strong> um painel escondido do navegador, pra quem desenvolve o site. Abre com a tecla <strong>F12</strong> (ou botão direito → "Inspecionar" → aba "Console"). Dá pra colar um comandinho ali e ele executa na hora, como se fosse o próprio site fazendo aquilo.</p>
+        <p><strong><code>fetch(...)</code>:</strong> o comando que se cola no Console pra fazer o navegador chamar uma rota da API diretamente (ex.: "dar alta num paciente"), sem precisar clicar em nenhum botão da tela. É só copiar e colar exatamente como está escrito no passo a passo de cada bug.</p>
+        <p><strong>JSON:</strong> o formato de texto que a API devolve como resposta, tipo <code>{"ok":true}</code>. É só um jeito de organizar informação em pares "nome: valor", dá pra ler direto.</p>
+        <p><strong>Timestamp</strong> (ex.: <code>1790081356243</code>): a forma que o sistema guarda "quando algo aconteceu" — é a quantidade de milissegundos (1/1000 de segundo) contados desde 1º de janeiro de 1970. Não precisa entender o número em si, só saber que <strong>quanto menor</strong>, mais <strong>antigo</strong> é o registro.</p>
+        <p><strong>Hash</strong> (de senha): uma senha "embaralhada" de um jeito que não dá pra desembaralhar de volta. Um sistema correto nunca guarda a senha exata, só esse embaralhado — e compara embaralhando de novo na hora do login.</p>
+        <p><strong>IDOR:</strong> sigla em inglês pra "referência direta insegura a objeto" — na prática, significa que o sistema deixa você acessar o dado de <strong>outra pessoa</strong> só trocando um número/ID na URL ou na requisição, sem checar se você tem permissão pra aquilo.</p>
+        <p><strong>Cookie de sessão:</strong> um "crachá" que o navegador guarda depois do login, provando quem você é nas próximas requisições. Reaproveitado automaticamente se você abrir uma nova aba no mesmo navegador — por isso vários passos pedem pra abrir "uma nova aba", sem precisar logar de novo.</p>
+        <p><strong>Caixa-preta / Caixa-cinza / Caixa-branca</strong> (etiqueta em cada card, ao lado da camada): indica como o bug foi encontrado. <strong>Caixa-preta</strong> = só testando pela tela/API, sem acesso "por dentro" do sistema. <strong>Caixa-cinza</strong> = precisou de acesso parcial por dentro (consultar o banco, olhar a resposta crua da API no Console) mas sem ler a lógica do código. <strong>Caixa-branca</strong> = só foi possível achar (ou confirmar a causa) lendo o código-fonte — nenhum teste de tela revelaria isso sozinho.</p>
+        <p><strong>Categoria</strong> (a etiqueta roxa/verde em cada card): o tipo de problema, não como foi achado. <strong>Segurança</strong> = alguém consegue fazer algo que não deveria (ver/alterar dado de outro, burlar login). <strong>Funcional</strong> = uma regra do sistema não funciona como deveria (cálculo errado, validação faltando). <strong>Integridade de dados</strong> = informação fica inconsistente ou é perdida/sobrescrita sem querer. <strong>Usabilidade (UX)</strong> = falta clareza ou proteção pro usuário (sem confirmação, contador errado). <strong>Visual</strong> = a tela não reflete corretamente o que está acontecendo por baixo dos panos.</p>
+      </div>
+    </details>
+  </header>
+
+  <div class="controls">
+    <input id="search" type="search" placeholder="Buscar por ID ou palavra-chave (ex.: BUG-002, senha, alerta)…" aria-label="Buscar bug">
+    <div class="chip-row" id="sevFilters" role="group" aria-label="Filtrar por severidade"></div>
+  </div>
+
+  <main id="sections"></main>
+  <p class="empty-msg" id="emptyMsg">Nenhum bug encontrado para esse filtro.</p>
+
+  <footer class="note">
+    <h3>Observações adicionais (não classificadas como bug isolado)</h3>
+    <ul>
+      <li>Todo novo paciente autocadastrado é sempre vinculado ao <strong>primeiro</strong> enfermeiro e ao <strong>primeiro</strong> médico cadastrados no banco (sem nenhum critério de distribuição) — regra de atribuição ingênua, não um erro de execução.</li>
+      <li>Cadastro de paciente não coleta idade nem leito — ficam vazios até alguém editar diretamente no banco; não há tela para isso.</li>
+    </ul>
+  </footer>
+</div>
+
+<div class="lightbox" id="lightbox" hidden>
+  <button class="lightbox-close" id="lightboxClose" type="button">Fechar ✕</button>
+  <div id="lightboxContent"></div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function () {
+  const SEV_ORDER = ['critica', 'alta', 'media', 'baixa'];
+  const SEV_LABEL = { critica: 'Crítica', alta: 'Alta', media: 'Média', baixa: 'Baixa' };
+  const TIPO_LABEL = { preta: 'Caixa-preta', cinza: 'Caixa-cinza', branca: 'Caixa-branca' };
+  const CATEGORIA_LABEL = { seguranca: 'Segurança', funcional: 'Funcional', integridade: 'Integridade de dados', usabilidade: 'Usabilidade (UX)', visual: 'Visual' };
+  const ACCEPTED_TYPES = 'image/png,image/jpeg,image/gif,image/webp,video/mp4,video/webm';
+
+  const BUGS = [
+    { id:'BUG-001', etapa:'1. Cadastro de usuário', titulo:'Senhas armazenadas em texto plano (sem hash)', sev:'critica', camada:'Back-end', tipo:'cinza', categoria:'seguranca',
+      evidencia:'server/routes/auth.js:60-61 — INSERT INTO users grava "password" exatamente como recebido, sem bcrypt/argon2/scrypt (nenhuma lib de hash é importada no projeto).',
+      passos:'1) Cadastre-se com senha "123456". 2) Abra o arquivo data/medalert.db no VS Code (extensão de SQLite) e olhe a tabela users, coluna password.',
+      atual:'Senha aparece legível, idêntica ao texto digitado (confirmado para usuários do seed e contas de teste, inclusive com emoji).',
+      esperado:'Hash no cadastro (ex.: bcrypt.hash) e bcrypt.compare() no login — banco nunca guarda a senha original.',
+      confirmacao:['Manual · consulta DB', 'Automatizado · Cypress cy.task'],
+      obs:'Mesmo que o BUG-005 seja corrigido um dia, esse problema continua existindo sozinho — falha independente e crítica.' },
+    { id:'BUG-002', etapa:'1. Cadastro de usuário', titulo:'XSS armazenado: nome do cadastro renderizado sem escapar em 9 telas', sev:'critica', camada:'Front-end + Back-end', tipo:'preta', categoria:'seguranca',
+      evidencia:'server/routes/auth.js:50 (back, não sanitiza) + public/app.js linhas 97, 272, 409, 317, 343, 451, 475, 494 (front, interpola sem escapar em innerHTML). O &lt;option&gt; do seletor de login (linha 110) NÃO executa — navegador descarta tags dentro de &lt;select&gt;.',
+      passos:'1) Em "Cadastre-se", preencha Nome completo com: Teste&lt;img src=x onerror=alert(document.cookie)&gt;. 2) Complete e-mail/senha e clique Cadastrar. 3) Volte pra tela inicial: campo "Usuário" selecione essa conta nova, campo "Senha" digite qualquer coisa (ex.: x), clique "Entrar". 4) O payload dispara no cabeçalho no topo da tela.',
+      atual:'O navegador cria a tag &lt;img&gt; de verdade no DOM do cabeçalho — HTML/JS injetado é interpretado, não é só dado sujo no banco. Confirmado com Cypress (AssertionError: &lt;img#xss-proof-cypress&gt; continuously found).',
+      esperado:'Nunca inserir dado do usuário direto em innerHTML. Escapar (<,>,",&) ou usar textContent/DOM.',
+      confirmacao:['Automatizado · Cypress', 'Manual · API'],
+      obs:'Combinado com BUG-008/BUG-018 (IDOR), um script injetado pode vazar prontuário de todos os pacientes.' },
+    { id:'BUG-003', etapa:'1. Cadastro de usuário', titulo:'Validação de e-mail no cadastro aceita domínio/TLD inválido', sev:'media', camada:'Back-end', tipo:'preta', categoria:'funcional',
+      evidencia:'server/routes/auth.js:7 — EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/ não valida TLD real nem tamanho.',
+      passos:'1) Em "Cadastre-se", preencha e-mail com "a@a.123456" (TLD só de números) e o resto normal. 2) Clique Cadastrar. 3) (Extra) Volte à tela inicial, campo "Usuário" selecione essa conta, campo "Senha" qualquer coisa (ex.: x), clique "Entrar" — loga normal.',
+      atual:'Cadastro aceito normalmente para TLDs claramente inválidos. Confirmado com Cypress: o teste loga com essa conta (via BUG-005) e espera que o cabeçalho NÃO exista — falha depois de 4s de retry (AssertionError: Timed out retrying after 4000ms: Expected &lt;header.topbar&gt; not to exist in the DOM, but it was continuously found), provando que a conta loga normalmente.',
+      esperado:'TLD alfabético com tamanho plausível (2-24 caracteres), ou confirmação por link enviado ao e-mail.',
+      confirmacao:['Manual', 'API', 'Automatizado · Cypress'],
+      obs:'Testes que passaram nesta mesma tela: nome duplicado (esperado), e-mail duplicado bloqueado (correto), senha != confirmar bloqueado (correto).' },
+    { id:'BUG-004', etapa:'1. Cadastro de usuário', titulo:'Cadastro aceita emoji no nome, e-mail e senha, sem sanitização', sev:'media', camada:'Back-end', tipo:'preta', categoria:'funcional',
+      evidencia:'server/routes/auth.js:50 (nome), :7 (e-mail), :53 (senha, só checa length < 6, não tipo de caractere).',
+      passos:'1) Em "Cadastre-se", preencha Nome, E-mail e Senha/Confirmar senha com emoji (ex.: 🫶🫶🫶🫶🫶🫶); ou senha só com 6 espaços. 2) Clique Cadastrar. 3) (Extra) Volte à tela inicial, campo "Usuário" selecione essa conta, campo "Senha" qualquer coisa (ex.: x), clique "Entrar" — loga normal, emojis aparecem no cabeçalho.',
+      atual:'Cadastro aceito normalmente nos 3 campos; dados gravados assim no banco (confirmado direto na tabela users). Confirmado com Cypress: o teste loga com essa conta de emoji (via BUG-005) e espera que o cabeçalho NÃO exista — falha depois de 4s de retry (AssertionError: Timed out retrying after 4000ms: Expected &lt;header.topbar&gt; not to exist in the DOM, but it was continuously found), provando que a conta loga normalmente (emojis aparecem de verdade no cabeçalho).',
+      esperado:'Nome: só letras/espaços/pontuação básica. E-mail: rejeitar caracteres fora do padrão real. Senha: mínimo baseado em força real, não só length bruto.',
+      confirmacao:['Manual', 'Automatizado · Cypress'],
+      obs:'O mesmo campo nome é reaproveitado sem escapar em várias telas — ver BUG-002.' },
+    { id:'BUG-005', etapa:'2. Login', titulo:'Login exige só 1 caractere de senha e não confere se é a senha correta', sev:'critica', camada:'Back-end', tipo:'preta', categoria:'seguranca',
+      evidencia:'server/routes/auth.js:31 — única checagem é "if (!password || password.length === 0)"; nunca compara com user.password.',
+      passos:'1) Abrir tela de login. 2) Selecionar qualquer usuário. 3) Digitar 1 caractere qualquer na senha (letra, número ou espaço). 4) Entrar.',
+      atual:'Login aceito com qualquer senha não-vazia, independente de estar correta. Confirmado com Cypress: o teste digita 1 caractere errado e espera que o cabeçalho NÃO exista — falha depois de 4s de retry (AssertionError: Timed out retrying after 4000ms: Expected &lt;header.topbar&gt; not to exist in the DOM, but it was continuously found), provando que o login foi aceito mesmo assim. Esse mesmo mecanismo é reaproveitado nos testes automatizados do BUG-003 e BUG-004.',
+      esperado:'Comparar a senha informada com a senha cadastrada e rejeitar senhas incorretas.',
+      confirmacao:['Manual · 5 usuários do seed + conta nova', 'Automatizado · Cypress'],
+      obs:'Combinado ao BUG-006 (diretório público), é explorável sem nenhum esforço de adivinhação de e-mail.' },
+    { id:'BUG-006', etapa:'2. Login', titulo:'Cadastro de e-mails exposto publicamente sem login', sev:'alta', camada:'Back-end', tipo:'cinza', categoria:'seguranca',
+      evidencia:'server/routes/auth.js:9-15 — GET /api/auth/directory é rota pública, sem requireAuth, retorna nome/papel/e-mail de todos.',
+      passos:'1) Sem estar logado, abra uma nova aba. 2) Digite na barra de endereço: http://localhost:3000/api/auth/directory. 3) Aperte Enter.',
+      atual:'Retorna lista completa de usuários (inclusive pacientes) sem exigir login.',
+      esperado:'Seletor de login não deveria expor e-mail nem indicar quem é paciente; campo de e-mail digitado resolveria sem esse vazamento.',
+      confirmacao:['Manual', 'Automatizado · Cypress/Postman'],
+      obs:'DIFERENTE dos outros: é decisão de design proposital (comentário no código confirma), não erro de codificação — mas com efeito colateral de segurança real, e é o que torna o BUG-005 trivial de explorar.' },
+    { id:'BUG-007', etapa:'2. Login', titulo:'Reset de dados de produção sem autenticação', sev:'alta', camada:'Back-end', tipo:'preta', categoria:'seguranca',
+      evidencia:'server/index.js:35-38 — POST /api/admin/reset chama seedDatabase() (apaga tudo) sem passar por requireAuth.',
+      passos:'1) Sem fazer login, clique em "Reiniciar dados do sistema" na tela inicial. 2) Confirme na modal (OK).',
+      atual:'Banco inteiro é apagado e recriado, sem exigir login nem confirmação server-side.',
+      esperado:'Endpoints destrutivos não deveriam existir sem autenticação/autorização de administrador.',
+      confirmacao:['Manual', 'Automatizado · Cypress/Postman'],
+      obs:'Comentário no código admite que é proposital "para a turma" — ainda assim vale como achado de QA.' },
+    { id:'BUG-008', etapa:'3. Pós-login (pacientes)', titulo:'IDOR — qualquer usuário lê dados de qualquer paciente', sev:'critica', camada:'Back-end', tipo:'cinza', categoria:'seguranca',
+      evidencia:'server/routes/patients.js:32-47 — GET /api/patients/:id só exige requireAuth, nunca confere vínculo do usuário logado com o :id pedido.',
+      passos:'1) Login como Marina Souza (paciente). 2) Numa nova aba do mesmo navegador, digite: http://localhost:3000/api/patients/pac2 (o id de outro paciente, o Roberto).',
+      atual:'Retorna prontuário completo (notas médicas privadas, vitais, alertas, prescrições) de qualquer paciente, sem checar vínculo.',
+      esperado:'Paciente só vê os próprios dados; enfermeiro/médico só os pacientes da própria carteira (mesma regra já aplicada em GET /api/patients, mas não replicada aqui).',
+      confirmacao:['Manual · curl', 'Automatizado · Cypress/Postman'],
+      obs:'Confirmado com nota médica privada real vazada: "DPOC em acompanhamento... Alergia a penicilina".' },
+    { id:'BUG-009', etapa:'4. Enfermagem (vitais)', titulo:'Unidade de temperatura inconsistente (°F na tela, °C na regra)', sev:'alta', camada:'Front-end + Back-end', tipo:'preta', categoria:'funcional',
+      evidencia:'public/app.js:322,219 rotulam °F; public/app.js:500 (limiares do médico) rotula °C; server/lib/rules.js:19 compara valor bruto sem converter; seed usa valores em Celsius (temp_high: 37.8).',
+      passos:'1) Login como Camila Duarte (enfermeira), qualquer senha. 2) Selecione a Marina. 3) Registre Temp. = 98 (o campo diz "°F"), resto normal. 4) Veja a aba Alertas.',
+      atual:'Sistema compara 98 direto com o limiar 37.8 (Celsius) e dispara alerta de febre em toda leitura normal.',
+      esperado:'Padronizar tudo em °C (compatível com o Brasil e com os limiares já semeados); corrigir o rótulo do campo da enfermagem.',
+      confirmacao:['Manual', 'Automatizado · Cypress'],
+      obs:'Rótulo "°F" provavelmente resquício de um sistema pensado originalmente em inglês/EUA.' },
+    { id:'BUG-010', etapa:'4. Enfermagem (vitais)', titulo:'Sem validação de faixa nos sinais vitais (aceita valores negativos/absurdos)', sev:'alta', camada:'Front-end + Back-end', tipo:'preta', categoria:'funcional',
+      evidencia:'public/app.js:377 (form não valida) + server/routes/patients.js:51-64 (só faz Number(), sem checar limites físicos).',
+      passos:'1) Login como Camila Duarte, selecione a Marina. 2) Registre FC = -50 (resto normal). 3) Veja o Histórico.',
+      atual:'Valor aceito e gravado normalmente, entrando no histórico e no cálculo de alertas.',
+      esperado:'Validação de faixa fisiologicamente plausível no front (feedback imediato) e no back (defesa em profundidade).',
+      confirmacao:['Manual', 'Automatizado · Cypress'], obs:'' },
+    { id:'BUG-011', etapa:'4. Enfermagem (vitais)', titulo:'Limite de FC alta usa > em vez de >= (erro de borda)', sev:'media', camada:'Back-end', tipo:'preta', categoria:'funcional',
+      evidencia:'server/lib/rules.js:16 — especificação diz "FC >= 100 gera alerta ALTA", implementação usa v.hr > patient.hr_high.',
+      passos:'1) Login como Camila Duarte, selecione a Marina (limite de FC = 100). 2) Registre FC = 100 (exatamente o limite). 3) Veja a aba Alertas — compare depois com FC = 101.',
+      atual:'Não dispara alerta, contrariando a regra especificada.',
+      esperado:'Usar >= em vez de > na comparação.',
+      confirmacao:['Automatizado · Cypress'], obs:'' },
+    { id:'BUG-012', etapa:'4. Enfermagem (vitais)', titulo:'Alertas duplicados ao registrar o mesmo sinal vital repetidas vezes', sev:'media', camada:'Back-end', tipo:'preta', categoria:'funcional',
+      evidencia:'server/lib/rules.js:22-24 — nenhuma checagem de duplicidade/cooldown antes de inserir novo alerta.',
+      passos:'1) Login como enfermeira Camila Duarte (camila@medalert.test, qualquer senha), selecione a Marina, registre um sinal fora da faixa (ex.: FC=110). 2) Registre EXATAMENTE o mesmo sinal de novo, uma segunda vez seguida. (Uma única vez sozinha gera só 1 alerta normal — não é bug; o bug só aparece na 2ª vez.)',
+      atual:'Cria dois alertas idênticos na lista, poluindo a visão da enfermagem/médico. Confirmado ao vivo via API: dois POST /vitals com o mesmo payload retornam newAlerts:1 cada um, resultando em 2 linhas idênticas no array de alertas do paciente.',
+      esperado:'Checar se já existe alerta idêntico pendente antes de criar um novo.',
+      confirmacao:['Automatizado · Cypress ("Found 2, expected 1")'],
+      obs:'Sugestão opcional (não obrigatória pra corrigir): ao detectar duplicidade, mostrar um toast/aviso pra enfermagem (ex.: "Esse alerta já está pendente para este paciente") em vez de só ignorar o novo registro em silêncio — a correção mínima é só o back-end não inserir o alerta repetido.' },
+    { id:'BUG-013', etapa:'5. Gestão de alertas', titulo:'Escalonamento automático de alertas críticos nunca acontece', sev:'alta', camada:'Back-end', tipo:'branca', categoria:'funcional',
+      evidencia:'server/lib/rules.js:32-41 — checkAutoEscalation() implementa a regra mas nunca é chamada em nenhuma rota nem agendador (código morto). Seed cria alerta crítico com 35 min de idade de propósito para provar isso.',
+      passos:'1) Clique em "Reiniciar dados do sistema" (recria o alerta já "fingindo" ter 35 min). 2) Login como Paulo Ferreira (enfermeiro do Roberto). 3) Selecione o Roberto. 4) Veja a aba Alertas — o alerta crítico de SpO2 já devia estar "Escalonado", mas mostra "Pendente".',
+      atual:'Status continua "pending" indefinidamente; nunca vira "escalated" sozinho.',
+      esperado:'Alertas críticos pendentes há mais de 15 min deveriam escalonar automaticamente.',
+      confirmacao:['Automatizado · Cypress'], obs:'' },
+    { id:'BUG-014', etapa:'5. Gestão de alertas', titulo:'Alerta pode ser "reconhecido" mais de uma vez', sev:'media', camada:'Back-end', tipo:'cinza', categoria:'integridade',
+      evidencia:'server/routes/alerts.js:9-18 — POST /:id/acknowledge não verifica status atual antes de sobrescrever acknowledged_at/acknowledged_by.',
+      passos:'1) Login como enfermeira Camila Duarte (camila@medalert.test, qualquer senha) — o botão "Reconhecer" só existe na tela do enfermeiro(a). 2) Selecione a Marina e gere um alerta (ex.: FC=110). 3) Na aba Alertas, clique em "Reconhecer". 4) Clique em "Reconhecer" DE NOVO, no mesmo alerta já reconhecido. (É preciso reconhecer duas vezes; a primeira sozinha funciona normalmente e não é bug.)',
+      atual:'O 2º "Reconhecer" sobrescreve quem/quando reconheceu de fato primeiro, perdendo o registro original — como se o primeiro reconhecimento nunca tivesse acontecido.',
+      esperado:'Bloquear ou avisar ao tentar reconhecer um alerta já reconhecido, preservando o registro original.',
+      confirmacao:['Automatizado · Cypress (comparação de timestamps via API)'], obs:'' },
+    { id:'BUG-015', etapa:'5. Gestão de alertas', titulo:'Sem controle de fluxo entre Reconhecer/Escalonar (status e auditoria inconsistentes)', sev:'media', camada:'Back-end', tipo:'cinza', categoria:'integridade',
+      evidencia:'server/routes/alerts.js — acknowledge (9-18) e escalate (20-26) não têm noção uma da outra; nenhuma máquina de estados; escalate nunca limpa acknowledged_at/by.',
+      passos:'1) Login como Camila, selecione a Marina, gere um alerta (ex.: FC=110). 2) Clique Reconhecer. 3) Clique Escalonar p/ médico (mesmo alerta). 4) Clique Reconhecer de novo (mesmo alerta). Observe o status mudando a cada clique, sem ordem fixa.',
+      atual:'Status alterna livremente entre "acknowledged" e "escalated"; um alerta "escalonado" pode continuar mostrando "reconhecido por Fulano" ao mesmo tempo.',
+      esperado:'Máquina de estados clara (pending -> acknowledged -> escalated) e limpeza dos campos de auditoria em transições.',
+      confirmacao:['Manual · sequência real testada', 'Automatizado · Cypress'],
+      obs:'Diferente do BUG-014: aqui o problema é entre status DIFERENTES, não duplicar o mesmo status.' },
+    { id:'BUG-016', etapa:'5. Gestão de alertas', titulo:'Contador de "alertas pendentes" no topo fica desatualizado', sev:'baixa', camada:'Front-end', tipo:'preta', categoria:'usabilidade',
+      evidencia:'public/app.js:285-298 — countPendingForMyPatients() só recalcula em render completo (login/troca de paciente), não após criar/reconhecer um alerta na mesma tela.',
+      passos:'1) Login como Camila. 2) Repare no número "Alertas pendentes" no topo (0). 3) Sem trocar de paciente, registre um sinal fora da faixa (ex.: FC=110). 4) Olhe o número de novo, sem recarregar a página.',
+      atual:'Badge "Alertas pendentes: N" continua mostrando o número antigo.',
+      esperado:'Contador deveria refletir o novo alerta imediatamente.',
+      confirmacao:['Automatizado · Cypress'], obs:'' },
+    { id:'BUG-017', etapa:'5. Gestão de alertas', titulo:'Botão "Reconhecer" alerta não pede confirmação', sev:'baixa', camada:'Front-end', tipo:'preta', categoria:'usabilidade',
+      evidencia:'public/app.js:383-389 — onclick chama api.acknowledge(...) direto, sem confirm()/modal. "Escalonar" (390-396) tem o mesmo problema.',
+      passos:'1) Login como enfermeira Camila Duarte (camila@medalert.test, qualquer senha). 2) Selecione a Marina e gere um alerta (registre um sinal fora da faixa, ex.: FC=110). 3) Na aba Alertas, clique em "Reconhecer".',
+      atual:'Ação é efetivada imediatamente, sem chance de cancelar.',
+      esperado:'Confirmar antes de agir, mesmo padrão já usado no link "Reiniciar dados do sistema".',
+      confirmacao:['Automatizado · Cypress (stub de window.confirm nunca chamado)'],
+      obs:'Combinado ao BUG-014: um clique acidental pode apagar silenciosamente o registro de quem reconheceu antes.' },
+    { id:'BUG-018', etapa:'6. Médico (limiares/prescrição/alta)', titulo:'IDOR — qualquer usuário altera/descarrega/prescreve para qualquer paciente', sev:'critica', camada:'Back-end', tipo:'cinza', categoria:'seguranca',
+      evidencia:'server/routes/patients.js — mesma falta de checagem de vínculo em POST /:id/vitals, PUT /:id/thresholds, POST /:id/prescriptions, POST /:id/discharge, POST /:id/call-nurse.',
+      passos:'1) Login como Marina (paciente). 2) Abra o Console do navegador (F12 → aba Console). 3) Cole: fetch("/api/patients/pac2/discharge",{method:"POST"}).then(r=>r.json()).then(console.log) e aperte Enter. 4) Depois clique em "Reiniciar dados do sistema" pra desfazer.',
+      atual:'Marina (paciente comum) consegue mudar limiares, lançar vitais falsos e DAR ALTA em Roberto — confirmado ao vivo, status virou "alta" de verdade.',
+      esperado:'Validar papel do usuário e vínculo com o paciente em cada ação.',
+      confirmacao:['Manual · sequência real, efeito colateral confirmado', 'Automatizado · Cypress/Postman'],
+      obs:'Banco foi restaurado via reset após o teste manual.' },
+    { id:'BUG-019', etapa:'6. Médico (limiares/prescrição/alta)', titulo:'Prescrição "salva com sucesso" sem paciente selecionado (falha silenciosa)', sev:'alta', camada:'Front-end + Back-end', tipo:'preta', categoria:'funcional',
+      evidencia:'public/app.js:439-440,568 (aba acessível e submit mesmo com d===null) + server/routes/patients.js:82-93 (responde 201 sucesso mesmo sem :id válido, sem else de erro).',
+      passos:'1) Cadastre uma conta nova de médico(a) (tela Cadastre-se). 2) Login com essa conta (sem nenhum paciente vinculado). 3) Clique direto na aba "Prescrição", sem selecionar paciente. 4) Preencha e envie.',
+      atual:'Toast de sucesso aparece, mas nada é persistido no banco — prescrição some silenciosamente.',
+      esperado:'Front não deveria permitir enviar sem paciente selecionado; back deveria retornar erro 400/404.',
+      confirmacao:['Automatizado · Cypress'], obs:'' },
+    { id:'BUG-020', etapa:'6. Médico (limiares/prescrição/alta)', titulo:'Alta do paciente sem tela de confirmação', sev:'baixa', camada:'Front-end', tipo:'preta', categoria:'usabilidade',
+      evidencia:'public/app.js:532-540 — botão "Dar alta" chama a API direto no onclick, sem confirm()/modal (diferente do link "Reiniciar dados", que tem confirmação).',
+      passos:'1) Login como Dra. Helena Prado (médica), selecione um paciente. 2) Clique em "Dar alta ao paciente".',
+      atual:'Alta efetivada imediatamente, sem chance de cancelar.',
+      esperado:'Confirmar antes de uma ação irreversível.',
+      confirmacao:['Automatizado · Cypress'], obs:'' },
+    { id:'BUG-021', etapa:'6. Médico (limiares/prescrição/alta)', titulo:'Botão "Dar alta" continua com aparência de ativo mesmo desabilitado', sev:'baixa', camada:'Front-end', tipo:'preta', categoria:'visual',
+      evidencia:'public/app.js:459 (disabled aplicado corretamente) + public/styles.css (sem nenhuma regra :disabled; .btn-danger mantém cor sólida; cursor:pointer global não é sobrescrito).',
+      passos:'1) Login como Dra. Helena Prado, selecione um paciente. 2) Repare na cor do botão "Dar alta ao paciente" antes de clicar. 3) Clique nele. 4) Compare a cor do botão antes/depois.',
+      atual:'Botão fica funcionalmente inativo (disabled=true, correto), mas visualmente idêntico a antes — mesma cor vermelha, mesmo cursor de clicável.',
+      esperado:'Sinal visual claro: opacidade/cinza, texto diferente, ou remoção do botão.',
+      confirmacao:['Automatizado · Cypress (cor CSS idêntica antes/depois)'], obs:'' },
+
+  ];
+
+  // ---------- Stat strip ----------
+  const statsEl = document.getElementById('stats');
+  const counts = { critica: 0, alta: 0, media: 0, baixa: 0 };
+  BUGS.forEach((b) => counts[b.sev]++);
+  const totalStat = document.createElement('div');
+  totalStat.className = 'stat';
+  totalStat.innerHTML = `<div class="n">${BUGS.length}</div><div class="l">Total</div>`;
+  statsEl.appendChild(totalStat);
+  SEV_ORDER.forEach((sev) => {
+    const el = document.createElement('div');
+    el.className = 'stat';
+    el.dataset.sev = sev;
+    el.innerHTML = `<div class="n">${counts[sev]}</div><div class="l">${SEV_LABEL[sev]}</div>`;
+    statsEl.appendChild(el);
+  });
+
+  // ---------- Severity filter chips ----------
+  const chipRow = document.getElementById('sevFilters');
+  let activeSev = 'todas';
+  function renderChips() {
+    chipRow.innerHTML = '';
+    const all = document.createElement('button');
+    all.className = 'chip'; all.type = 'button'; all.textContent = 'Todas';
+    all.setAttribute('aria-pressed', String(activeSev === 'todas'));
+    all.onclick = () => { activeSev = 'todas'; renderChips(); applyFilters(); };
+    chipRow.appendChild(all);
+    SEV_ORDER.forEach((sev) => {
+      const b = document.createElement('button');
+      b.className = 'chip'; b.type = 'button'; b.textContent = SEV_LABEL[sev];
+      b.setAttribute('aria-pressed', String(activeSev === sev));
+      b.onclick = () => { activeSev = sev; renderChips(); applyFilters(); };
+      chipRow.appendChild(b);
+    });
+  }
+
+  // ---------- Sections + cards ----------
+  const sectionsEl = document.getElementById('sections');
+  const etapas = [...new Set(BUGS.map((b) => b.etapa))];
+  const cardEls = [];
+  const mediaStrips = {};   // bugId -> .media-strip element
+  const mediaAdds = {};     // bugId -> .media-add element
+
+  etapas.forEach((etapa) => {
+    const sec = document.createElement('section');
+    sec.className = 'etapa';
+    const h2 = document.createElement('h2');
+    h2.textContent = etapa;
+    sec.appendChild(h2);
+    const cardsWrap = document.createElement('div');
+    cardsWrap.className = 'cards';
+
+    BUGS.filter((b) => b.etapa === etapa).forEach((b) => {
+      const det = document.createElement('details');
+      det.className = 'bug';
+      det.dataset.sev = b.sev;
+      det.open = b.sev === 'critica';
+
+      const confirmBadges = b.confirmacao.map((c) => `<span class="confirm-badge">${c}</span>`).join('');
+
+      det.innerHTML = `
+        <summary class="bug-head">
+          <span class="id">${b.id}</span>
+          <span class="sev-chip">${SEV_LABEL[b.sev]}</span>
+          <span class="camada-tag">${b.camada}</span>
+          <span class="tipo-tag" data-tipo="${b.tipo}">${TIPO_LABEL[b.tipo]}</span>
+          <span class="categoria-tag">${CATEGORIA_LABEL[b.categoria]}</span>
+          <span class="bug-title">${b.titulo}</span>
+        </summary>
+        <div class="bug-body">
+          <div class="field evidencia"><label>Evidência no código</label><p>${b.evidencia}</p></div>
+          <div class="field"><label>Passos para reproduzir</label><p>${b.passos}</p></div>
+          <div class="field"><label>Resultado atual</label><p>${b.atual}</p></div>
+          <div class="field"><label>Resultado esperado</label><p>${b.esperado}</p></div>
+          <div class="field"><label>Confirmação</label><div class="confirm-row">${confirmBadges}</div></div>
+          ${b.obs ? `<p class="obs">${b.obs}</p>` : ''}
+          <div class="field">
+            <label>Evidência (print/vídeo)</label>
+            <div class="media-strip" data-bug="${b.id}"></div>
+          </div>
+        </div>`;
+
+      cardsWrap.appendChild(det);
+      cardEls.push({ el: det, sec, data: b });
+      mediaStrips[b.id] = det.querySelector('.media-strip');
+    });
+
+    sec.appendChild(cardsWrap);
+    sectionsEl.appendChild(sec);
+  });
+
+  // ---------- Filtering ----------
+  const searchInput = document.getElementById('search');
+  const emptyMsg = document.getElementById('emptyMsg');
+
+  function applyFilters() {
+    const q = searchInput.value.trim().toLowerCase();
+    let visibleCount = 0;
+    const sectionHasVisible = new Map();
+
+    cardEls.forEach(({ el, sec, data }) => {
+      const matchesSev = activeSev === 'todas' || data.sev === activeSev;
+      const haystack = (data.id + ' ' + data.titulo + ' ' + data.evidencia + ' ' + data.atual + ' ' + TIPO_LABEL[data.tipo] + ' ' + CATEGORIA_LABEL[data.categoria]).toLowerCase();
+      const matchesQuery = !q || haystack.includes(q);
+      const visible = matchesSev && matchesQuery;
+      el.hidden = !visible;
+      if (visible) {
+        visibleCount++;
+        sectionHasVisible.set(sec, true);
+      }
+    });
+
+    [...new Set(cardEls.map((c) => c.sec))].forEach((sec) => {
+      sec.hidden = !sectionHasVisible.get(sec);
+    });
+
+    emptyMsg.style.display = visibleCount === 0 ? 'block' : 'none';
+  }
+
+  searchInput.addEventListener('input', applyFilters);
+  renderChips();
+  applyFilters();
+
+  // ---------- Lightbox ----------
+  const lightbox = document.getElementById('lightbox');
+  const lightboxContent = document.getElementById('lightboxContent');
+  function openLightbox(item) {
+    lightboxContent.innerHTML = item.kind === 'video'
+      ? `<video src="/_blob/${item.id}" controls autoplay></video>`
+      : `<img src="/_blob/${item.id}" alt="Evidência">`;
+    lightbox.hidden = false;
+  }
+  function closeLightbox() {
+    lightbox.hidden = true;
+    lightboxContent.innerHTML = '';
+  }
+  document.getElementById('lightboxClose').onclick = closeLightbox;
+
+  // ---------- Toast (substitui alert(), que pode ficar bloqueado no iframe do artifact) ----------
+  const toastEl = document.getElementById('toast');
+  let toastTimer = null;
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toastEl.hidden = true; }, 3500);
+  }
+  lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !lightbox.hidden) closeLightbox(); });
+
+  // ---------- Evidence media: assets + db ----------
+  function renderMediaStrip(bugId, items, canWrite) {
+    const strip = mediaStrips[bugId];
+    if (!strip) return;
+    strip.innerHTML = '';
+
+    (items || []).forEach((item) => {
+      const thumb = document.createElement('div');
+      thumb.className = 'media-thumb';
+      thumb.tabIndex = 0;
+      thumb.setAttribute('role', 'button');
+      thumb.setAttribute('aria-label', item.kind === 'video' ? 'Abrir vídeo' : 'Abrir print');
+      thumb.innerHTML = item.kind === 'video'
+        ? `<video src="/_blob/${item.id}" muted></video><span class="play-badge">▶</span>`
+        : `<img src="/_blob/${item.id}" alt="Evidência" loading="lazy">`;
+      const open = () => openLightbox(item);
+      thumb.addEventListener('click', open);
+      thumb.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+
+      if (canWrite) {
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'del-btn';
+        del.textContent = '✕';
+        del.setAttribute('aria-label', 'Excluir esta evidência');
+        del.addEventListener('click', (e) => {
+          e.stopPropagation();
+          del.dataset.busy = 'true';
+          deleteEvidencia(bugId, item.id, del);
+        });
+        thumb.appendChild(del);
+      }
+
+      strip.appendChild(thumb);
+    });
+
+    if (canWrite) {
+      const add = document.createElement('label');
+      add.className = 'media-add';
+      add.innerHTML = `+ print/vídeo<input type="file" accept="${ACCEPTED_TYPES}">`;
+      const input = add.querySelector('input');
+      input.addEventListener('change', () => {
+        const file = input.files && input.files[0];
+        if (file) uploadEvidencia(bugId, file, add);
+        input.value = '';
+      });
+      strip.appendChild(add);
+    } else if (!items || items.length === 0) {
+      const hint = document.createElement('span');
+      hint.className = 'media-empty-hint';
+      hint.textContent = 'Nenhum print/vídeo anexado ainda.';
+      strip.appendChild(hint);
+    }
+  }
+
+  (async function initEvidence() {
+    let dbCap = null, assetsCap = null;
+    try { dbCap = await window.claude?.use?.('db'); } catch (e) { dbCap = null; }
+    try { assetsCap = await window.claude?.use?.('assets'); } catch (e) { assetsCap = null; }
+
+    const canWrite = !!assetsCap && !!dbCap;
+    const mediaByBug = {};
+
+    // Render empty strips right away so the page never looks broken while capabilities load.
+    Object.keys(mediaStrips).forEach((bugId) => renderMediaStrip(bugId, [], canWrite));
+
+    if (!dbCap) return; // no persistence available in this view — strips stay empty/read-only
+
+    window._addEvidencia = async function uploadEvidenciaImpl(bugId, file, addEl) {
+      if (!assetsCap) return;
+      if (addEl) addEl.dataset.busy = 'true';
+      try {
+        const result = await assetsCap.upload(file);
+        const kind = result.contentType.indexOf('video/') === 0 ? 'video' : 'image';
+        const ref = dbCap.doc('evidencias/' + bugId);
+        const snap = await ref.get();
+        const existing = (snap.exists && Array.isArray(snap.data().items)) ? snap.data().items : [];
+        const items = existing.concat([{ id: result.id, contentType: result.contentType, kind, addedAt: new Date().toISOString() }]);
+        await ref.set({ items });
+      } catch (err) {
+        showToast('Não deu pra enviar o arquivo: ' + (err && err.message ? err.message : 'erro desconhecido'));
+      } finally {
+        if (addEl) addEl.dataset.busy = 'false';
+      }
+    };
+
+    window._deleteEvidencia = async function deleteEvidenciaImpl(bugId, assetId, delEl) {
+      if (!assetsCap) return;
+      try {
+        const ref = dbCap.doc('evidencias/' + bugId);
+        const snap = await ref.get();
+        const existing = (snap.exists && Array.isArray(snap.data().items)) ? snap.data().items : [];
+        await ref.set({ items: existing.filter((it) => it.id !== assetId) });
+        await assetsCap.delete(assetId);
+      } catch (err) {
+        showToast('Não deu pra excluir: ' + (err && err.message ? err.message : 'erro desconhecido'));
+      } finally {
+        if (delEl) delEl.dataset.busy = 'false';
+      }
+    };
+
+    dbCap.collection('evidencias').onSnapshot(
+      (qs) => {
+        qs.docs.forEach((doc) => {
+          const data = doc.data();
+          mediaByBug[doc.id] = (data && Array.isArray(data.items)) ? data.items : [];
+        });
+        Object.keys(mediaStrips).forEach((bugId) => {
+          renderMediaStrip(bugId, mediaByBug[bugId] || [], canWrite);
+        });
+      },
+      () => { /* db unavailable mid-session — strips just stop updating live */ }
+    );
+  })();
+
+  function uploadEvidencia(bugId, file, addEl) {
+    if (window._addEvidencia) window._addEvidencia(bugId, file, addEl);
+  }
+
+  function deleteEvidencia(bugId, assetId, delEl) {
+    if (window._deleteEvidencia) window._deleteEvidencia(bugId, assetId, delEl);
+  }
+})();
+</script>
+
+</body></html>

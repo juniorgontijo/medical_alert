@@ -141,4 +141,4 @@ O workflow [.github/workflows/cypress.yml](.github/workflows/cypress.yml) roda a
 
   **Leitura do resultado:** os 3 cenários fecharam com **0% de erro** e latência bem abaixo da meta em todos os casos — inclusive no `spike`, onde o sistema levou um salto abrupto de 5 pra 100 usuários simultâneos e continuou respondendo em ~1ms, sem timeout nem falha. Pra esse sistema, o gargalo de performance não parece ser um risco real — os problemas sérios encontrados no projeto são de segurança e regra de negócio (ver [BUGS.md](BUGS.md)), não de capacidade sob carga.
 - **Excel:** `BUGS.xlsx` — mesmo conteúdo do BUGS.md, em formato planilha.
-- **Site interativo:** log de bugs publicado com filtro, busca e upload de evidência (link compartilhado separadamente).
+- **Site interativo:** log de bugs publicado com filtro, busca e upload de evidência — [PT](https://claude.ai/artifact/2mYWCDe2fXeRkMBWaBjDFg) · [EN](https://claude.ai/artifact/M947KJzfsQZ6fRUeo6KMHQ). Código-fonte em [site/](site/).
