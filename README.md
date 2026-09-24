@@ -1,5 +1,7 @@
 # MedAlert — Automação de Testes (Cypress)
 
+> Versão em inglês: [README_EN.md](README_EN.md).
+
 Este README explica como rodar a suíte automatizada e onde encontrar as evidências (vídeos/prints) de cada teste. Ver também [BUGS.md](BUGS.md) (log completo de bugs), [FEATURES.md](FEATURES.md) (sugestões de feature), [PROJECT_BRIEF.md](PROJECT_BRIEF.md), [TEST_PLAN.md](TEST_PLAN.md) e [TEST_CASES.md](TEST_CASES.md).
 
 ## Pré-requisitos
@@ -106,8 +108,14 @@ Vídeos:     29/29 gerados com sucesso em cypress/videos/
 | `medico/02-bug-020-alta-sem-confirmacao.cy.js` | ❌ Falhou (BUG-020) |
 | `medico/03-bug-021-botao-sem-feedback.cy.js` | ❌ Falhou (BUG-021) |
 
+## CI/CD (GitHub Actions)
+
+O workflow [.github/workflows/cypress.yml](.github/workflows/cypress.yml) roda a suíte automaticamente a cada push/PR na branch `main`, dividida em 2 jobs:
+- **`happy-path`** — roda só os 6 testes que devem passar. É o único que trava o pipeline (vermelho aqui = algo realmente quebrou).
+- **`bug-suite`** — roda os outros 23 testes que provam bug. Configurado com `continue-on-error`, então pode falhar à vontade sem derrubar o pipeline — cada falha aqui é o resultado esperado, não um erro de infraestrutura. Os vídeos/prints ficam disponíveis como artifact do próprio run, em Actions.
+
 ## Outras ferramentas do projeto
-- **Postman:** [MedAlert.postman_collection.json](MedAlert.postman_collection.json) — importar no Postman pra testar as rotas manualmente.
+- **Postman:** [MedAlert.postman_collection.json](MedAlert.postman_collection.json) (ou [MedAlert_EN.postman_collection.json](MedAlert_EN.postman_collection.json) em inglês) — importar no Postman pra testar as rotas manualmente.
 - **k6 (teste de carga):**
   ```bash
   k6 run k6/load-test.js
