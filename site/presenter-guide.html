@@ -1,0 +1,610 @@
+<title>MedAlert Presenter Guide</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#f4f7f8;
+    --surface:#ffffff;
+    --surface-2:#eef3f4;
+    --border:#d7e1e3;
+    --text:#12232b;
+    --text-muted:#516670;
+    --accent:#0e7c86;
+    --accent-strong:#0a5b63;
+    --accent-soft:#e2f2f1;
+    --critical:#b23324;
+    --critical-soft:#fbe7e4;
+    --high:#b5651d;
+    --high-soft:#faeee0;
+    --medium:#9c7f12;
+    --medium-soft:#f6f1de;
+    --low:#4c6b78;
+    --low-soft:#e7eef1;
+    --shadow: 0 1px 2px rgba(18,35,43,0.06), 0 8px 24px rgba(18,35,43,0.05);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0e161c;
+      --surface:#152029;
+      --surface-2:#1b2830;
+      --border:#2b3a42;
+      --text:#e7eef0;
+      --text-muted:#93aab2;
+      --accent:#33c2c6;
+      --accent-strong:#5fd6d9;
+      --accent-soft:rgba(51,194,198,0.14);
+      --critical:#ff8272;
+      --critical-soft:rgba(255,130,114,0.14);
+      --high:#f2ab6b;
+      --high-soft:rgba(242,171,107,0.14);
+      --medium:#e8d06a;
+      --medium-soft:rgba(232,208,106,0.14);
+      --low:#9db6c1;
+      --low-soft:rgba(157,182,193,0.12);
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0e161c;
+    --surface:#152029;
+    --surface-2:#1b2830;
+    --border:#2b3a42;
+    --text:#e7eef0;
+    --text-muted:#93aab2;
+    --accent:#33c2c6;
+    --accent-strong:#5fd6d9;
+    --accent-soft:rgba(51,194,198,0.14);
+    --critical:#ff8272;
+    --critical-soft:rgba(255,130,114,0.14);
+    --high:#f2ab6b;
+    --high-soft:rgba(242,171,107,0.14);
+    --medium:#e8d06a;
+    --medium-soft:rgba(232,208,106,0.14);
+    --low:#9db6c1;
+    --low-soft:rgba(157,182,193,0.12);
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+    color-scheme: dark;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:"IBM Plex Sans", system-ui, sans-serif;
+    padding-inline:20px;
+    padding-block:20px;
+    max-width:920px;
+    margin:0 auto;
+    line-height:1.5;
+  }
+  .mono{font-family:"IBM Plex Mono", ui-monospace, monospace;}
+
+  /* ---- sticky control bar ---- */
+  .control-bar{
+    position:sticky;
+    top:env(safe-area-inset-top, 0px);
+    z-index:10;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    padding:14px 18px;
+    margin-bottom:22px;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:14px;
+  }
+  .control-bar .title-block{flex:1 1 220px;min-width:200px;}
+  .control-bar h1{
+    font-size:1.05rem;
+    margin:0 0 2px;
+    letter-spacing:0.01em;
+  }
+  .control-bar .sub{
+    font-size:0.78rem;
+    color:var(--text-muted);
+  }
+  .timer-block{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .clock{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:1.6rem;
+    font-weight:600;
+    font-variant-numeric: tabular-nums;
+    min-width:5.2ch;
+    text-align:right;
+  }
+  .clock.over{color:var(--critical);}
+  .target-badge{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.72rem;
+    color:var(--text-muted);
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:3px 9px;
+    white-space:nowrap;
+  }
+  .btn{
+    font-family:"IBM Plex Sans", sans-serif;
+    font-size:0.8rem;
+    font-weight:600;
+    border:1px solid var(--border);
+    background:var(--surface-2);
+    color:var(--text);
+    border-radius:8px;
+    padding:8px 12px;
+    cursor:pointer;
+    transition:background .15s ease, border-color .15s ease;
+  }
+  .btn:hover{border-color:var(--accent);}
+  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .btn.primary{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+  }
+  .btn.primary:hover{background:var(--accent-strong);}
+
+  .progress-track{
+    width:100%;
+    height:5px;
+    border-radius:999px;
+    background:var(--surface-2);
+    overflow:hidden;
+    margin-top:10px;
+  }
+  .progress-fill{
+    height:100%;
+    background:var(--accent);
+    width:0%;
+    transition:width .3s linear;
+  }
+  .progress-fill.over{background:var(--critical);}
+
+  /* ---- run of show ---- */
+  .chart-label{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.7rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    margin:28px 0 10px;
+  }
+  .segment{
+    display:grid;
+    grid-template-columns:78px 1fr;
+    gap:16px;
+    border:1px solid var(--border);
+    background:var(--surface);
+    border-radius:12px;
+    padding:16px 18px;
+    margin-bottom:12px;
+    box-shadow:var(--shadow);
+    transition:border-color .2s ease, background .2s ease;
+  }
+  .segment.active{
+    border-color:var(--accent);
+    background:var(--accent-soft);
+  }
+  .segment .stamp{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.78rem;
+    color:var(--text-muted);
+    padding-top:2px;
+    white-space:nowrap;
+  }
+  .segment.active .stamp{color:var(--accent-strong);font-weight:600;}
+  .segment h2{
+    font-size:1rem;
+    margin:0 0 8px;
+    text-wrap:balance;
+  }
+  .segment ul{
+    margin:0 0 10px;
+    padding-left:1.1em;
+    font-size:0.9rem;
+  }
+  .segment li{margin-bottom:4px;}
+  .segment li:last-child{margin-bottom:0;}
+  .demo{
+    font-size:0.82rem;
+    color:var(--accent-strong);
+    background:var(--surface-2);
+    border-left:3px solid var(--accent);
+    padding:7px 10px;
+    border-radius:0 6px 6px 0;
+    margin-top:8px;
+  }
+  .segment.active .demo{background:var(--surface);}
+
+  /* ---- risk cards inside findings segment ---- */
+  .risk-grid{
+    display:grid;
+    gap:8px;
+    margin:6px 0 10px;
+  }
+  .risk{
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:10px;
+    align-items:start;
+    padding:8px 10px;
+    border-radius:8px;
+    background:var(--surface-2);
+    font-size:0.86rem;
+  }
+  .sev{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:0.66rem;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    border-radius:5px;
+    padding:2px 6px;
+    white-space:nowrap;
+    align-self:start;
+  }
+  .sev.critical{background:var(--critical-soft);color:var(--critical);}
+  .sev.high{background:var(--high-soft);color:var(--high);}
+  .risk b{display:block;font-size:0.88rem;}
+  .risk span.bugid{color:var(--text-muted);font-family:"IBM Plex Mono", monospace;font-size:0.76rem;}
+
+  /* ---- severity legend table (strategy segment) ---- */
+  .sev-table{width:100%;border-collapse:collapse;font-size:0.85rem;margin:6px 0 10px;}
+  .sev-table td{padding:5px 8px;border-bottom:1px solid var(--border);vertical-align:top;}
+  .sev-table tr:last-child td{border-bottom:none;}
+  .sev-table td:first-child{white-space:nowrap;}
+
+  /* ---- feature cards segment ---- */
+  .feature-list{display:grid;gap:6px;margin:6px 0 10px;}
+  .feature{
+    background:var(--surface-2);
+    border-radius:8px;
+    padding:8px 10px;
+    font-size:0.86rem;
+  }
+  .feature b{font-family:"IBM Plex Mono", monospace;font-size:0.76rem;color:var(--accent-strong);}
+
+  /* ---- bottom reference blocks ---- */
+  .ref-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(260px,1fr));
+    gap:14px;
+    margin-top:8px;
+  }
+  .ref-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:16px 18px;
+    box-shadow:var(--shadow);
+  }
+  .ref-card h3{margin:0 0 8px;font-size:0.95rem;}
+  .qa-item{margin-bottom:10px;font-size:0.86rem;}
+  .qa-item:last-child{margin-bottom:0;}
+  .qa-item .q{font-weight:600;margin-bottom:2px;}
+  .qa-item .a{color:var(--text-muted);}
+  .checklist{list-style:none;margin:0;padding:0;font-size:0.86rem;}
+  .checklist li{
+    display:flex;
+    gap:8px;
+    align-items:flex-start;
+    margin-bottom:7px;
+  }
+  .checklist li:last-child{margin-bottom:0;}
+  .checklist .box{
+    width:14px;height:14px;flex:none;
+    border:1.5px solid var(--text-muted);
+    border-radius:3px;
+    margin-top:2px;
+  }
+
+  footer{
+    text-align:center;
+    color:var(--text-muted);
+    font-size:0.74rem;
+    margin:26px 0 6px;
+  }
+
+  @media (max-width:520px){
+    .segment{grid-template-columns:1fr;}
+    .segment .stamp{padding-top:0;}
+    .control-bar{flex-direction:column;align-items:stretch;}
+    .timer-block{justify-content:space-between;}
+  }
+</style>
+
+<div class="control-bar">
+  <div class="title-block">
+    <h1>MedAlert — Final Presentation</h1>
+    <div class="sub">Run of show · speak from the segment highlighted below</div>
+  </div>
+  <div class="timer-block">
+    <span class="target-badge">Target 15–20 min · script 17:00</span>
+    <span class="clock mono" id="clock">00:00</span>
+    <button class="btn primary" id="toggleBtn" type="button">Start</button>
+    <button class="btn" id="resetBtn" type="button">Reset</button>
+  </div>
+  <div class="progress-track" style="flex-basis:100%;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+</div>
+
+<div class="chart-label">Run of show</div>
+<div id="segments"></div>
+
+<div class="chart-label">Reference, not timed</div>
+<div class="ref-grid">
+  <div class="ref-card">
+    <h3>Likely technical questions</h3>
+    <div class="qa-item">
+      <div class="q">"BUG-013 causes real patient-safety risk — why is it 'High', not 'Critical'?"</div>
+      <div class="a">Severity is set by the rule (data exposure / auth = Critical by definition). Fix order overrides severity: BUG-013 jumps ahead of some Critical sign-up bugs because it's a silent failure, not because its severity label changed.</div>
+    </div>
+    <div class="qa-item">
+      <div class="q">"Why Cypress, not Playwright or Selenium?"</div>
+      <div class="a">Same Node.js stack as the app, native per-test video (evidence for free), retry/assertion model fits "assert correct behavior, go red on the real bug," synchronous cy.request for pure API/IDOR checks.</div>
+    </div>
+    <div class="qa-item">
+      <div class="q">"How did you decide bug vs. feature suggestion?"</div>
+      <div class="a">Bug = an explicit rule is violated. No written rule = feature suggestion, logged separately. Example: BUG-003 candidate → reclassified as FEATURE-004; diastolic pressure → FEATURE-005, once confirmed the spec defines no rule for it.</div>
+    </div>
+    <div class="qa-item">
+      <div class="q">"What would you test next with more time?"</div>
+      <div class="a">Accessibility, Firefox/Safari, k6 stress/soak scenarios, and the diastolic-pressure alert rule once product confirms it's in scope.</div>
+    </div>
+  </div>
+  <div class="ref-card">
+    <h3>Before you start</h3>
+    <ul class="checklist">
+      <li><span class="box"></span> This guide open full-screen on the second monitor.</li>
+      <li><span class="box"></span> Primary screen: app at localhost:3000, data freshly reset (<span class="mono">npm run reset-db</span>).</li>
+      <li><span class="box"></span> Browser tab ready for the BUG-008 IDOR demo (Marina session, patient pac2 URL).</li>
+      <li><span class="box"></span> SUMMARY_EN.md and BUGS_EN.md open in another tab as backup.</li>
+      <li><span class="box"></span> Cypress run recording ready in case a live run is too risky on the day.</li>
+      <li><span class="box"></span> Press <b>Start</b> here right when you begin talking.</li>
+    </ul>
+  </div>
+</div>
+
+<footer>MedAlert QA Challenge — presenter guide, not a graded deliverable. Content mirrors SUMMARY_EN.md.</footer>
+
+<script>
+(function(){
+  var segments = [
+    {
+      start: 0, end: 30, time: "0:00–0:30",
+      title: "Open: frame the four questions",
+      points: [
+        "“I’ll cover what I found, how I prioritized it, what I automated and why, and what I’d recommend before production.”"
+      ]
+    },
+    {
+      start: 30, end: 120, time: "0:30–2:00",
+      title: "System & scope",
+      points: [
+        "Hospital alert system, 3 roles: patient / nurse / doctor.",
+        "Tested: sign-up & login, vitals → alerts, alert lifecycle, medical actions, access control (IDOR), API load (k6).",
+        "Out of scope, one line each: accessibility, cross-browser, MFA/password recovery (don’t exist), admin role (doesn’t exist)."
+      ],
+      demo: "Have SUMMARY_EN.md visible on the primary screen."
+    },
+    {
+      start: 120, end: 240, time: "2:00–4:00",
+      title: "Strategy & prioritization",
+      points: [
+        "Three methods combined: exploratory testing + source-code review (catches dead code) + Cypress automation (repeatable, video evidence).",
+        "Severity = business/clinical impact, not how often a screen is used."
+      ],
+      table: [
+        ["Critical", "Sensitive data exposed/alterable by anyone; broken auth"],
+        ["High", "Business rule broken, direct clinical risk or data loss"],
+        ["Medium", "Incorrect rule, no immediate direct risk"],
+        ["Low", "UX/visual only"]
+      ],
+      demo: "Mention BUG-013 exception: High severity, but fixed before some Criticals because it’s a silent patient-safety gap."
+    },
+    {
+      start: 240, end: 540, time: "4:00–9:00",
+      title: "What I found — top 5 risks",
+      risks: [
+        ["critical", "BUG-008 / BUG-018", "Critical IDOR — any logged-in user reads or edits any patient’s chart, including private medical notes."],
+        ["critical", "BUG-001 / BUG-005", "Plain-text password + login bypass — authentication is effectively not enforced."],
+        ["high", "BUG-020 / BUG-017", "No confirmation on irreversible actions — discharge and alert acknowledgment; no undo anywhere."],
+        ["high", "BUG-013", "Dead automatic-escalation rule — a critical alert can sit unattended forever."],
+        ["high", "BUG-009", "°F/°C mismatch — false fever alerts on every normal reading, risk of alert fatigue."]
+      ],
+      demo: "If time allows: live-demo BUG-008 — log in as Marina, open /api/patients/pac2, show it returns data instead of 403."
+    },
+    {
+      start: 540, end: 780, time: "9:00–13:00",
+      title: "Automation — what & why",
+      points: [
+        "Cypress: native video per test, retry/assert model fits “assert correct behavior, go red on the real bug,” synchronous API great for pure API/IDOR tests.",
+        "29 tests total — 6 pass (proves good flows work), 23 fail on purpose (each failure IS the proof of a bug).",
+        "Required coverage named explicitly: boundary case (TC-018, HR exactly at threshold 100) and access control (TC-011, IDOR read)."
+      ],
+      demo: "Run the suite live, or play the recorded execution video if live risk is too high."
+    },
+    {
+      start: 780, end: 870, time: "13:00–14:30",
+      title: "Improvement suggestions (not bugs)",
+      points: [
+        "No written rule was broken — just behavior worth adding. Kept separate from the bug log."
+      ],
+      features: [
+        ["FEATURE-001", "Reassigning patients between nurses/doctors — no screen exists today."],
+        ["FEATURE-002", "Cancel a patient discharge — there’s no undo or status history."],
+        ["FEATURE-003", "Let the patient pick urgency when calling a nurse, instead of a hardcoded “low” severity."],
+        ["FEATURE-004", "Require approval before a self-registered doctor/nurse account becomes usable."],
+        ["FEATURE-005", "Add a real alert rule for diastolic blood pressure — collected today, never evaluated."]
+      ],
+      demo: "“These five are logged as improvement cards, not QA findings — backlog material for product, not defects.”"
+    },
+    {
+      start: 870, end: 990, time: "14:30–16:30",
+      title: "Recommendation before production",
+      points: [
+        "Do not ship with the 2 Critical IDOR bugs and the password/login-bypass pair still open — together they compromise every patient’s data and the entire auth model.",
+        "Treat BUG-013 as equally urgent despite its “High” label — it’s a silent patient-safety gap.",
+        "Medium/Low findings can follow in a fast-follow release."
+      ],
+      demo: "Close with one sentence: “Not production-ready today — but close, with a short, specific fix list.”"
+    },
+    {
+      start: 990, end: 1020, time: "16:30–17:00",
+      title: "Close & invite questions",
+      points: [
+        "Thank the panel, invite technical questions — they may already have interrupted earlier, that’s expected."
+      ]
+    }
+  ];
+
+  var container = document.getElementById('segments');
+  var els = segments.map(function(seg){
+    var el = document.createElement('div');
+    el.className = 'segment';
+
+    var stamp = document.createElement('div');
+    stamp.className = 'stamp mono';
+    stamp.textContent = seg.time;
+    el.appendChild(stamp);
+
+    var body = document.createElement('div');
+
+    var h2 = document.createElement('h2');
+    h2.textContent = seg.title;
+    body.appendChild(h2);
+
+    if (seg.points) {
+      var ul = document.createElement('ul');
+      seg.points.forEach(function(p){
+        var li = document.createElement('li');
+        li.textContent = p;
+        ul.appendChild(li);
+      });
+      body.appendChild(ul);
+    }
+
+    if (seg.table) {
+      var table = document.createElement('table');
+      table.className = 'sev-table';
+      seg.table.forEach(function(row){
+        var tr = document.createElement('tr');
+        var td1 = document.createElement('td');
+        td1.innerHTML = '<b>' + row[0] + '</b>';
+        var td2 = document.createElement('td');
+        td2.textContent = row[1];
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+        table.appendChild(tr);
+      });
+      body.appendChild(table);
+    }
+
+    if (seg.risks) {
+      var grid = document.createElement('div');
+      grid.className = 'risk-grid';
+      seg.risks.forEach(function(r){
+        var row = document.createElement('div');
+        row.className = 'risk';
+        var sev = document.createElement('span');
+        sev.className = 'sev ' + r[0];
+        sev.textContent = r[0];
+        var text = document.createElement('div');
+        text.innerHTML = '<span class="bugid">' + r[1] + '</span><b>' + r[2] + '</b>';
+        row.appendChild(sev);
+        row.appendChild(text);
+        grid.appendChild(row);
+      });
+      body.appendChild(grid);
+    }
+
+    if (seg.features) {
+      var flist = document.createElement('div');
+      flist.className = 'feature-list';
+      seg.features.forEach(function(f){
+        var item = document.createElement('div');
+        item.className = 'feature';
+        item.innerHTML = '<b>' + f[0] + '</b> — ' + f[1];
+        flist.appendChild(item);
+      });
+      body.appendChild(flist);
+    }
+
+    if (seg.demo) {
+      var demo = document.createElement('div');
+      demo.className = 'demo';
+      demo.textContent = seg.demo;
+      body.appendChild(demo);
+    }
+
+    el.appendChild(body);
+    container.appendChild(el);
+    return el;
+  });
+
+  var clockEl = document.getElementById('clock');
+  var fillEl = document.getElementById('progressFill');
+  var toggleBtn = document.getElementById('toggleBtn');
+  var resetBtn = document.getElementById('resetBtn');
+  var TOTAL = segments[segments.length - 1].end; // 1020s
+
+  var elapsed = 0;
+  var running = false;
+  var tick = null;
+
+  function fmt(sec){
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function render(){
+    clockEl.textContent = fmt(elapsed);
+    clockEl.classList.toggle('over', elapsed > TOTAL);
+    var pct = Math.min(100, (elapsed / TOTAL) * 100);
+    fillEl.style.width = pct + '%';
+    fillEl.classList.toggle('over', elapsed > TOTAL);
+    els.forEach(function(el, i){
+      var seg = segments[i];
+      el.classList.toggle('active', elapsed >= seg.start && elapsed < seg.end);
+    });
+  }
+
+  function start(){
+    if (running) return;
+    running = true;
+    toggleBtn.textContent = 'Pause';
+    tick = setInterval(function(){
+      elapsed += 1;
+      render();
+    }, 1000);
+  }
+
+  function pause(){
+    running = false;
+    toggleBtn.textContent = 'Resume';
+    if (tick) clearInterval(tick);
+  }
+
+  toggleBtn.addEventListener('click', function(){
+    if (running) pause(); else start();
+  });
+
+  resetBtn.addEventListener('click', function(){
+    pause();
+    elapsed = 0;
+    toggleBtn.textContent = 'Start';
+    render();
+  });
+
+  render();
+})();
+</script>

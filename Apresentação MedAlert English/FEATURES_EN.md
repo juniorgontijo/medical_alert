@@ -1,8 +1,8 @@
 # MedAlert — Feature Suggestions (not bugs)
 
-> This is the English version of [FEATURES.md](FEATURES.md), prepared as a final deliverable. The Portuguese version remains the working copy; this one is a faithful translation, kept in sync manually.
+> This is the English version of [FEATURES.md](../FEATURES.md), prepared as a final deliverable. The Portuguese version remains the working copy; this one is a faithful translation, kept in sync manually.
 >
-> Unlike [BUGS.md](BUGS.md) / [BUGS_EN.md](BUGS_EN.md): there's no defect here — it's missing behavior, or a design decision worth questioning. It doesn't count as a QA finding in the presentation, but it's good to keep it on record as a product/scope observation. See [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) / [OPEN_QUESTIONS_EN.md](OPEN_QUESTIONS_EN.md) for the full context behind each one.
+> Unlike [BUGS.md](../BUGS.md) / [BUGS_EN.md](BUGS_EN.md): there's no defect here — it's missing behavior, or a design decision worth questioning. It doesn't count as a QA finding in the presentation, but it's good to keep it on record as a product/scope observation. See [OPEN_QUESTIONS.md](../OPEN_QUESTIONS.md) / [OPEN_QUESTIONS_EN.md](../OPEN_QUESTIONS_EN.md) for the full context behind each one.
 
 ---
 

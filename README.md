@@ -1,144 +1,142 @@
-# MedAlert — Automação de Testes (Cypress)
+# MedAlert — Test Automation (Cypress)
 
-> Versão em inglês: [README_EN.md](README_EN.md).
+This README explains how to run the automated suite and where to find the evidence (videos/screenshots) for each test. See also [BUGS.md](BUGS.md) (full bug log), [FEATURES.md](FEATURES.md) (feature suggestions), [PROJECT_BRIEF.md](PROJECT_BRIEF.md), [TEST_PLAN.md](TEST_PLAN.md) and [TEST_CASES.md](TEST_CASES.md).
 
-Este README explica como rodar a suíte automatizada e onde encontrar as evidências (vídeos/prints) de cada teste. Ver também [BUGS.md](BUGS.md) (log completo de bugs), [FEATURES.md](FEATURES.md) (sugestões de feature), [PROJECT_BRIEF.md](PROJECT_BRIEF.md), [TEST_PLAN.md](TEST_PLAN.md) e [TEST_CASES.md](TEST_CASES.md).
+## Prerequisites
+- Node.js installed.
+- Project dependencies installed: `npm install` (in the project root).
 
-## Pré-requisitos
-- Node.js instalado.
-- Dependências do projeto instaladas: `npm install` (na raiz do projeto).
-
-## 1. Subir o sistema (MedAlert)
-Em um terminal, na raiz do projeto:
+## 1. Start the system (MedAlert)
+In one terminal, at the project root:
 ```bash
 node server/index.js
 ```
-O sistema fica disponível em `http://localhost:3000`.
+The system is available at `http://localhost:3000`.
 
-## 2. Rodar a suíte Cypress
-Em **outro** terminal (deixe o servidor do passo 1 rodando):
+## 2. Run the Cypress suite
+In **another** terminal (leave step 1's server running):
 ```bash
 npx cypress run
 ```
 
-Isso executa os **29 testes automatizados**, um por arquivo, e grava um vídeo de cada um.
+This runs the **29 automated tests**, one per file, recording a video of each one.
 
-> **Nota (Windows/ambiente com `ELECTRON_RUN_AS_NODE`):** se o terminal tiver essa variável de ambiente setada (comum em alguns shells de ferramentas de IA/CLI), o Cypress não abre corretamente. Rode `unset ELECTRON_RUN_AS_NODE` antes do comando acima nesses casos.
+> **Note (Windows/environments with `ELECTRON_RUN_AS_NODE`):** if the terminal has this environment variable set (common in some AI/CLI tool shells), Cypress won't open correctly. Run `unset ELECTRON_RUN_AS_NODE` before the command above in that case.
 
-### Rodar só um teste específico
+### Running a single test
 ```bash
-npx cypress run --spec "cypress/e2e/<pasta>/<arquivo>.cy.js"
+npx cypress run --spec "cypress/e2e/<folder>/<file>.cy.js"
 ```
-⚠️ **Atenção:** o Cypress apaga a pasta `cypress/videos` inteira antes de qualquer execução (padrão da ferramenta, `trashAssetsBeforeRuns`) — mesmo rodando um teste só. Se você já tem os 29 vídeos gerados e só quer conferir 1 teste, rode a suíte completa de novo depois (`npx cypress run`, sem `--spec`) pra repor todos os vídeos.
+⚠️ **Warning:** Cypress wipes the entire `cypress/videos` folder before any run (the tool's default `trashAssetsBeforeRuns` behavior) — even when running a single test. If you already have all 29 videos generated and just want to check 1 test, run the full suite again afterward (`npx cypress run`, no `--spec`) to regenerate every video.
 
-### Modo interativo (ver os testes rodando na tela)
+### Interactive mode (watch the tests run on screen)
 ```bash
 npx cypress open
 ```
 
-## O que esperar do resultado
+## What to expect from the result
 
-A suíte tem **29 testes**: **6 passam** (comprovam que fluxos corretos funcionam) e **23 falham de propósito** (cada falha é a prova automatizada de um bug real, documentado em [BUGS.md](BUGS.md)). Isso é o resultado esperado e correto — não é a suíte "quebrada". Ver a filosofia completa no [TEST_PLAN.md](TEST_PLAN.md), seção "Critérios de entrada e saída".
+The suite has **29 tests**: **6 pass** (proving correct flows actually work) and **23 fail on purpose** (each failure is the automated proof of a real bug, documented in [BUGS.md](BUGS.md)). This is the expected, correct result — the suite is not "broken". See the full philosophy in [TEST_PLAN.md](TEST_PLAN.md), "Entry and exit criteria" section.
 
-## Ajustando a velocidade da gravação (opcional)
+## Adjusting the recording speed (optional)
 
-Os testes rodam com uma "câmera lenta" configurável, pra ficar visível em vídeo/apresentação:
+Tests run with a configurable "slow motion" mode, to stay legible on video/in a presentation:
 ```bash
-npx cypress run --env SLOWDOWN_MS=1200   # mais devagar
-npx cypress run --env SLOWDOWN_MS=0      # desliga a câmera lenta
+npx cypress run --env SLOWDOWN_MS=1200   # slower
+npx cypress run --env SLOWDOWN_MS=0      # turn off slow motion
 ```
-Configuração em [cypress/support/e2e.js](cypress/support/e2e.js).
+Configured in [cypress/support/e2e.js](cypress/support/e2e.js).
 
-## Onde ficam as evidências
-- **Vídeos:** `cypress/videos/<categoria>/<teste>.cy.js.mp4` — um por teste, nas 6 pastas abaixo.
-- **Prints de falha:** `cypress/screenshots/` (gerados automaticamente pelo Cypress quando um teste falha).
+## Where the evidence lives
+- **Videos:** `cypress/videos/<category>/<test>.cy.js.mp4` — one per test, across the 6 folders below.
+- **Failure screenshots:** `cypress/screenshots/` (generated automatically by Cypress when a test fails).
 
-## Estrutura da suíte
+## Suite structure
 
-| Pasta | Qtd. testes | Perfil principal | Cobre |
+| Folder | Test count | Main role | Covers |
 |---|---|---|---|
-| `cypress/e2e/cadastro/` | 7 | Paciente | Cadastro de usuário (válido e inválido) |
-| `cypress/e2e/login/` | 4 | Paciente/anônimo | Login e acesso não autenticado |
-| `cypress/e2e/pos-login-pacientes/` | 5 | Paciente | Leitura/escrita de dados de pacientes (IDOR) |
-| `cypress/e2e/enfermagem-sinais-vitais/` | 5 | Enfermeiro(a) | Registro de sinais vitais e geração de alertas |
-| `cypress/e2e/gestao-alertas/` | 5 | Enfermeiro(a) | Reconhecer/escalonar alertas |
-| `cypress/e2e/medico/` | 3 | Médico(a) | Limiares, prescrição, alta de paciente |
+| `cypress/e2e/cadastro/` | 7 | Patient | User sign-up (valid and invalid) |
+| `cypress/e2e/login/` | 4 | Patient/anonymous | Login and unauthenticated access |
+| `cypress/e2e/pos-login-pacientes/` | 5 | Patient | Reading/writing patient data (IDOR) |
+| `cypress/e2e/enfermagem-sinais-vitais/` | 5 | Nurse | Recording vitals and generating alerts |
+| `cypress/e2e/gestao-alertas/` | 5 | Nurse | Acknowledging/escalating alerts |
+| `cypress/e2e/medico/` | 3 | Doctor | Thresholds, prescription, patient discharge |
 
-Detalhamento de cada caso em [TEST_CASES.md](TEST_CASES.md).
+Full breakdown of each case in [TEST_CASES.md](TEST_CASES.md).
 
-## Relatório da última execução
+## Last execution report
 
 ```
-Suíte:      29 testes
-Passando:   6
-Falhando:   23 (esperado — cada um prova um bug, ver BUGS.md)
-Duração:    ~4min17s
-Vídeos:     29/29 gerados com sucesso em cypress/videos/
+Suite:      29 tests
+Passing:    6
+Failing:    23 (expected — each one proves a bug, see BUGS.md)
+Duration:   ~4min17s
+Videos:     29/29 generated successfully in cypress/videos/
 ```
 
-| Spec | Resultado |
+| Spec | Result |
 |---|---|
-| `cadastro/01-cadastro-valido.cy.js` | ✅ Passou |
-| `cadastro/02-senha-diferente.cy.js` | ✅ Passou |
-| `cadastro/03-email-duplicado.cy.js` | ✅ Passou |
-| `cadastro/04-bug-003-email-tld-invalido.cy.js` | ❌ Falhou (BUG-003) |
-| `cadastro/05-bug-004-emoji.cy.js` | ❌ Falhou (BUG-004) |
-| `cadastro/06-bug-002-xss.cy.js` | ❌ Falhou (BUG-002) |
-| `cadastro/07-bug-001-senha-texto-plano.cy.js` | ❌ Falhou (BUG-001) |
-| `login/01-login-valido.cy.js` | ✅ Passou |
-| `login/02-bug-005-senha-incorreta.cy.js` | ❌ Falhou (BUG-005) |
-| `login/03-bug-006-diretorio-publico.cy.js` | ❌ Falhou (BUG-006) |
-| `login/04-bug-007-reset-sem-auth.cy.js` | ❌ Falhou (BUG-007) |
-| `pos-login-pacientes/01-lista-normal.cy.js` | ✅ Passou |
-| `pos-login-pacientes/02-bug-008-idor-leitura.cy.js` | ❌ Falhou (BUG-008) |
-| `pos-login-pacientes/03-bug-018-idor-thresholds.cy.js` | ❌ Falhou (BUG-018) |
-| `pos-login-pacientes/04-bug-018-idor-vitals.cy.js` | ❌ Falhou (BUG-018) |
-| `pos-login-pacientes/05-bug-018-idor-discharge.cy.js` | ❌ Falhou (BUG-018) |
-| `enfermagem-sinais-vitais/01-sinais-normais.cy.js` | ✅ Passou |
-| `enfermagem-sinais-vitais/02-bug-011-limite-fc.cy.js` | ❌ Falhou (BUG-011) |
-| `enfermagem-sinais-vitais/03-bug-009-temperatura.cy.js` | ❌ Falhou (BUG-009) |
-| `enfermagem-sinais-vitais/04-bug-010-fc-negativa.cy.js` | ❌ Falhou (BUG-010) |
-| `enfermagem-sinais-vitais/05-bug-012-duplicados.cy.js` | ❌ Falhou (BUG-012) |
-| `gestao-alertas/01-bug-013-escalonamento.cy.js` | ❌ Falhou (BUG-013) |
-| `gestao-alertas/02-bug-014-reconhecer-2x.cy.js` | ❌ Falhou (BUG-014) |
-| `gestao-alertas/03-bug-015-fluxo-inconsistente.cy.js` | ❌ Falhou (BUG-015) |
-| `gestao-alertas/04-bug-016-contador.cy.js` | ❌ Falhou (BUG-016) |
-| `gestao-alertas/05-bug-017-confirmacao-reconhecer.cy.js` | ❌ Falhou (BUG-017) |
-| `medico/01-bug-019-prescricao-sem-paciente.cy.js` | ❌ Falhou (BUG-019) |
-| `medico/02-bug-020-alta-sem-confirmacao.cy.js` | ❌ Falhou (BUG-020) |
-| `medico/03-bug-021-botao-sem-feedback.cy.js` | ❌ Falhou (BUG-021) |
+| `cadastro/01-cadastro-valido.cy.js` | ✅ Passed |
+| `cadastro/02-senha-diferente.cy.js` | ✅ Passed |
+| `cadastro/03-email-duplicado.cy.js` | ✅ Passed |
+| `cadastro/04-bug-003-email-tld-invalido.cy.js` | ❌ Failed (BUG-003) |
+| `cadastro/05-bug-004-emoji.cy.js` | ❌ Failed (BUG-004) |
+| `cadastro/06-bug-002-xss.cy.js` | ❌ Failed (BUG-002) |
+| `cadastro/07-bug-001-senha-texto-plano.cy.js` | ❌ Failed (BUG-001) |
+| `login/01-login-valido.cy.js` | ✅ Passed |
+| `login/02-bug-005-senha-incorreta.cy.js` | ❌ Failed (BUG-005) |
+| `login/03-bug-006-diretorio-publico.cy.js` | ❌ Failed (BUG-006) |
+| `login/04-bug-007-reset-sem-auth.cy.js` | ❌ Failed (BUG-007) |
+| `pos-login-pacientes/01-lista-normal.cy.js` | ✅ Passed |
+| `pos-login-pacientes/02-bug-008-idor-leitura.cy.js` | ❌ Failed (BUG-008) |
+| `pos-login-pacientes/03-bug-018-idor-thresholds.cy.js` | ❌ Failed (BUG-018) |
+| `pos-login-pacientes/04-bug-018-idor-vitals.cy.js` | ❌ Failed (BUG-018) |
+| `pos-login-pacientes/05-bug-018-idor-discharge.cy.js` | ❌ Failed (BUG-018) |
+| `enfermagem-sinais-vitais/01-sinais-normais.cy.js` | ✅ Passed |
+| `enfermagem-sinais-vitais/02-bug-011-limite-fc.cy.js` | ❌ Failed (BUG-011) |
+| `enfermagem-sinais-vitais/03-bug-009-temperatura.cy.js` | ❌ Failed (BUG-009) |
+| `enfermagem-sinais-vitais/04-bug-010-fc-negativa.cy.js` | ❌ Failed (BUG-010) |
+| `enfermagem-sinais-vitais/05-bug-012-duplicados.cy.js` | ❌ Failed (BUG-012) |
+| `gestao-alertas/01-bug-013-escalonamento.cy.js` | ❌ Failed (BUG-013) |
+| `gestao-alertas/02-bug-014-reconhecer-2x.cy.js` | ❌ Failed (BUG-014) |
+| `gestao-alertas/03-bug-015-fluxo-inconsistente.cy.js` | ❌ Failed (BUG-015) |
+| `gestao-alertas/04-bug-016-contador.cy.js` | ❌ Failed (BUG-016) |
+| `gestao-alertas/05-bug-017-confirmacao-reconhecer.cy.js` | ❌ Failed (BUG-017) |
+| `medico/01-bug-019-prescricao-sem-paciente.cy.js` | ❌ Failed (BUG-019) |
+| `medico/02-bug-020-alta-sem-confirmacao.cy.js` | ❌ Failed (BUG-020) |
+| `medico/03-bug-021-botao-sem-feedback.cy.js` | ❌ Failed (BUG-021) |
 
 ## CI/CD (GitHub Actions)
 
-O workflow [.github/workflows/cypress.yml](.github/workflows/cypress.yml) roda a suíte automaticamente a cada push/PR na branch `main`, dividida em 2 jobs:
-- **`happy-path`** — roda só os 6 testes que devem passar. É o único que trava o pipeline (vermelho aqui = algo realmente quebrou).
-- **`bug-suite`** — roda os outros 23 testes que provam bug. Configurado com `continue-on-error`, então pode falhar à vontade sem derrubar o pipeline — cada falha aqui é o resultado esperado, não um erro de infraestrutura. Os vídeos/prints ficam disponíveis como artifact do próprio run, em Actions.
-- **`k6-smoke`** — roda o cenário `smoke` do k6 a cada push, também informativo (`continue-on-error`). Threshold de performance numa máquina compartilhada do GitHub varia por ruído de vizinho, então não trava o pipeline — serve como checagem leve de regressão, não como gate de release.
+The [.github/workflows/cypress.yml](.github/workflows/cypress.yml) workflow runs the suite automatically on every push/PR to `main`, split into 2 jobs:
+- **`happy-path`** — runs only the 6 tests that should pass. This is the only job that gates the pipeline (a red check here means something actually broke).
+- **`bug-suite`** — runs the other 23 bug-proving tests. Configured with `continue-on-error`, so it can fail freely without bringing the pipeline down — every failure here is the expected result, not an infrastructure error. Videos/screenshots are uploaded as an artifact of that run, under Actions.
+- **`k6-smoke`** — runs the k6 `smoke` scenario on every push, also informational (`continue-on-error`). Performance thresholds on a shared GitHub runner vary with noisy-neighbor load, so this never gates the pipeline — it's a lightweight regression check, not a release gate.
 
-## Outras ferramentas do projeto
-- **Postman:** [MedAlert.postman_collection.json](MedAlert.postman_collection.json) (ou [MedAlert_EN.postman_collection.json](MedAlert_EN.postman_collection.json) em inglês) — importar no Postman pra testar as rotas manualmente.
-- **k6 (teste de carga):**
+## Other tools in the project
+- **Postman:** [MedAlert.postman_collection.json](MedAlert.postman_collection.json) (or [MedAlert_EN.postman_collection.json](MedAlert_EN.postman_collection.json) in English) — import into Postman to test the routes manually.
+- **k6 (load test):**
   ```bash
-  k6 run k6/load-test.js                        # load (padrão) — carga gradual, uso normal
-  k6 run --env SCENARIO=smoke k6/load-test.js   # smoke — 1 usuário, 30s, só confirma que funciona
-  k6 run --env SCENARIO=spike k6/load-test.js   # spike — pico abrupto de 100 usuários
+  k6 run k6/load-test.js                        # load (default) — gradual ramp, normal usage
+  k6 run --env SCENARIO=smoke k6/load-test.js   # smoke — 1 user, 30s, just confirms it works
+  k6 run --env SCENARIO=spike k6/load-test.js   # spike — abrupt burst of 100 users
   ```
-  Cenários stress/breakpoint/soak existem no k6 mas foram deixados de fora de propósito (risco de derrubar o servidor local da apresentação, ou exigem horas de execução) — ver comentário no topo de [k6/load-test.js](k6/load-test.js).
+  Stress/breakpoint/soak scenarios exist in k6 but were deliberately left out (risk of taking down the local presentation server, or requiring hours to run) — see the comment at the top of [k6/load-test.js](k6/load-test.js).
 
-  #### O que é p95/p99 (e por que não usar só a média)
+  #### What p95/p99 means (and why not just use the average)
 
-  Cada requisição feita ao servidor tem um tempo de resposta diferente — a maioria rápida, algumas mais lentas. **Percentil 95 (p95)** responde à pergunta "das minhas requisições, 95% delas responderam em até quanto tempo?" — ou seja, só as **5% mais lentas** (o pior caso) ficam de fora dessa conta. **p99** é a mesma ideia, só que mais rigorosa: só o **1% mais lento** fica de fora.
+  Every request made to the server has a different response time — most fast, some slower. **95th percentile (p95)** answers the question "how long did 95% of my requests take, at most?" — in other words, only the **slowest 5%** (the worst case) are left out of that count. **p99** is the same idea, just stricter: only the **slowest 1%** is excluded.
 
-  Por que não usar a média? Porque a média **esconde** os casos ruins. Exemplo: se 99 usuários são atendidos em 50ms e só 1 demora 10 segundos, a média ainda dá um número baixinho e "bonito" — mas aquele usuário teve uma experiência péssima, e a média nunca conta essa história. O percentil mostra exatamente o que a maioria (ou quase todo mundo) sentiu de verdade, incluindo o pior caso relevante.
+  Why not just use the average? Because the average **hides** the bad cases. Example: if 99 users get served in 50ms and just 1 takes 10 seconds, the average still comes out low and "pretty" — but that one user had a terrible experience, and the average never tells that story. A percentile shows exactly what most people (or nearly everyone) actually felt, including the worst case that still matters.
 
-  #### Última execução — os 3 cenários
+  #### Last execution — all 3 scenarios
 
-  | Cenário | Usuários simultâneos | Duração | Requisições | Erros | p95 (meta) | p99 (meta) | Resultado |
+  | Scenario | Concurrent users | Duration | Requests | Errors | p95 (target) | p99 (target) | Result |
   |---|---|---|---|---|---|---|---|
-  | **smoke** | 1 (fixo) | 30s | 122 | 0,00% | 0,66ms (<500ms) | — | ✅ Thresholds passaram |
-  | **load** | 0 → 10 → pico de 30 → 0 | 1m20s | 5.230 | 0,00% | 1,03ms (<500ms) | 1,17ms (<1000ms) | ✅ Thresholds passaram |
-  | **spike** | 5 → pico abrupto de 100 → 5 → 0 | 40s | 8.442 | 0,00% | 1,03ms (<800ms) | 1,19ms (<2000ms) | ✅ Thresholds passaram |
+  | **smoke** | 1 (fixed) | 30s | 122 | 0.00% | 0.66ms (<500ms) | — | ✅ Thresholds passed |
+  | **load** | 0 -> 10 -> peak of 30 -> 0 | 1m20s | 5,230 | 0.00% | 1.03ms (<500ms) | 1.17ms (<1000ms) | ✅ Thresholds passed |
+  | **spike** | 5 -> abrupt peak of 100 -> 5 -> 0 | 40s | 8,442 | 0.00% | 1.03ms (<800ms) | 1.19ms (<2000ms) | ✅ Thresholds passed |
 
-  **Leitura do resultado:** os 3 cenários fecharam com **0% de erro** e latência bem abaixo da meta em todos os casos — inclusive no `spike`, onde o sistema levou um salto abrupto de 5 pra 100 usuários simultâneos e continuou respondendo em ~1ms, sem timeout nem falha. Pra esse sistema, o gargalo de performance não parece ser um risco real — os problemas sérios encontrados no projeto são de segurança e regra de negócio (ver [BUGS.md](BUGS.md)), não de capacidade sob carga.
-- **Excel:** `BUGS.xlsx` — mesmo conteúdo do BUGS.md, em formato planilha.
-- **Site interativo:** log de bugs publicado com filtro, busca e upload de evidência — [PT](https://claude.ai/artifact/2mYWCDe2fXeRkMBWaBjDFg) · [EN](https://claude.ai/artifact/M947KJzfsQZ6fRUeo6KMHQ). Código-fonte em [site/](site/).
+  **Reading the result:** all 3 scenarios closed with **0% errors** and latency well under target in every case — including `spike`, where the system took an abrupt jump from 5 to 100 concurrent users and kept responding in ~1ms, with no timeouts or failures. For this system, performance doesn't appear to be a real bottleneck risk — the serious problems found in this project are security and business-rule bugs (see [BUGS.md](BUGS.md)), not load capacity.
+- **Excel:** `BUGS.xlsx` — the same content as BUGS.md, in spreadsheet form.
+- **Interactive site:** published bug log with filtering, search, and evidence upload — [PT](https://claude.ai/artifact/2mYWCDe2fXeRkMBWaBjDFg) · [EN](https://claude.ai/artifact/M947KJzfsQZ6fRUeo6KMHQ). Source code in [site/](site/).

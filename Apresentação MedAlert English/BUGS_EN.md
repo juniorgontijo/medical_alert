@@ -1,6 +1,6 @@
 # MedAlert — QA Bug Log (English)
 
-> This is the English version of [BUGS.md](BUGS.md), prepared as a final deliverable. The Portuguese version remains the working copy; this one is a faithful translation, kept in sync manually.
+> This is the English version of [BUGS.md](../BUGS.md), prepared as a final deliverable. The Portuguese version remains the working copy; this one is a faithful translation, kept in sync manually.
 >
 > Bug log compiled from manual testing plus full code review, for presentation purposes.
 > Organized by **chronological order of system usage** (business flow): registration first, then login, then authenticated usage (viewing patients → nursing records vital signs → alert management → doctor actions). Each entry also indicates **severity** and **layer** (Back-end, Front-end, or both).
@@ -69,7 +69,7 @@ Each bug below indicates how it was found, because that changes how easy it is t
 - **Layer:** Back-end
 - **Test type:** Gray-box (had to query the database directly — you can't see the raw password just through the screen)
 - **Category:** Security
-- **Evidence in code:** [server/routes/auth.js:60-61](server/routes/auth.js#L60-L61) — on registration, the password received from the form is stored **exactly as received**, without going through any hashing function (`bcrypt`, `argon2`, `scrypt`, etc. — none of these libraries is even imported in the project):
+- **Evidence in code:** [server/routes/auth.js:60-61](../server/routes/auth.js#L60-L61) — on registration, the password received from the form is stored **exactly as received**, without going through any hashing function (`bcrypt`, `argon2`, `scrypt`, etc. — none of these libraries is even imported in the project):
   ```js
   db.prepare('INSERT INTO users (id, role, name, email, password) VALUES (?,?,?,?,?)')
     .run(id, role, name.trim(), email.trim(), password);
@@ -101,7 +101,7 @@ This kind of flaw would already be critical on its own in any real system — an
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-![BUG-001](evidencias/BUG-001.png)
+![BUG-001](../evidencias/BUG-001.png)
 
 ---
 
@@ -111,8 +111,8 @@ This kind of flaw would already be critical on its own in any real system — an
 - **Layer:** Front-end + Back-end
 - **Test type:** Black-box (pasting HTML into the Full name field and checking whether it becomes a real element on screen is a behavior test, no code reading required)
 - **Category:** Security
-- **Evidence (Back-end):** [server/routes/auth.js:50](server/routes/auth.js#L50) doesn't filter or sanitize the name content — accepts `<`, `>`, `"`, and any HTML.
-- **Evidence (Front-end):** the user's name is interpolated **raw**, inside a template string, directly into `innerHTML`, in at least 9 places in [public/app.js](public/app.js), with no escaping at all:
+- **Evidence (Back-end):** [server/routes/auth.js:50](../server/routes/auth.js#L50) doesn't filter or sanitize the name content — accepts `<`, `>`, `"`, and any HTML.
+- **Evidence (Front-end):** the user's name is interpolated **raw**, inside a template string, directly into `innerHTML`, in at least 9 places in [public/app.js](../public/app.js), with no escaping at all:
   - line 97 — logged-in user's name at the top (`topbar`)
   - line 110 — `<option>` in the login selector (see caveat below)
   - lines 272 and 409 — patient name in the nursing/doctor sidebar
@@ -127,7 +127,7 @@ This kind of flaw would already be critical on its own in any real system — an
 4. Log in with that same account: go back to the home screen, in the **"User"** field select the account you just created (it will appear in the list with the name you typed), in the **"Password"** field type anything (e.g., `x` — works because of BUG-005), and click **"Log in"**. The payload fires when rendering the **header** at the top of the screen, which shows the logged-in user's name.
 
 ### Confirmed in automated testing (Cypress, real Electron/Chromium browser)
-Test in [cypress/e2e/cadastro.cy.js](cypress/e2e/cadastro.cy.js) — registers the account with the payload, logs in with it, and checks whether the malicious tag exists inside `.topbar`. Actual execution result:
+Test in [cypress/e2e/cadastro.cy.js](../cypress/e2e/cadastro.cy.js) — registers the account with the payload, logs in with it, and checks whether the malicious tag exists inside `.topbar`. Actual execution result:
 ```
 AssertionError: Timed out retrying after 4000ms: Expected <img#xss-proof-cypress> not to exist in the DOM, but it was continuously found.
 ```
@@ -136,7 +136,7 @@ In other words, the `<img>` tag **was actually created** in the header's DOM, co
 I also confirmed via API that the data is stored **raw** in the database (`"Test<img src=x onerror=alert(document.cookie)>"`) and that `/api/auth/directory` returns that value with no escaping at all — the root cause (front-end never escapes anything) is the same for all 8 valid exploitation points.
 
 ### Why this is worse than "just" a common XSS
-- Since patient registration automatically links to the first nurse and the first doctor in the system (a naive assignment rule, see "Additional observations" at the end of this document and [FEATURES.md](FEATURES.md) FEATURE-001), this malicious name also shows up in the **authenticated sidebar** of the responsible nurse and doctor (lines 272/409) — meaning the attack doesn't depend only on the attacker themselves logging in; it also executes inside the logged-in session of a real healthcare professional, with that professional doing nothing more than looking at the patient list.
+- Since patient registration automatically links to the first nurse and the first doctor in the system (a naive assignment rule, see "Additional observations" at the end of this document and [FEATURES.md](../FEATURES.md) FEATURE-001), this malicious name also shows up in the **authenticated sidebar** of the responsible nurse and doctor (lines 272/409) — meaning the attack doesn't depend only on the attacker themselves logging in; it also executes inside the logged-in session of a real healthcare professional, with that professional doing nothing more than looking at the patient list.
 - The session cookie is `httpOnly` (can't be read directly via `document.cookie`), but that doesn't neutralize the attack: a script running in the nurse's/doctor's session could simply **make calls to the API itself, as if it were that user** (`fetch('/api/patients/...')`, etc.) — and, combined with BUG-008/BUG-018 (IDOR), a script like that could sweep through and leak the medical records of **every patient in the system**, all because someone self-registered with a malicious name.
 
 ### Expected result
@@ -144,7 +144,7 @@ Never insert user-provided data directly into `innerHTML`. Either escape the tex
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-![BUG-002](evidencias/BUG-002.png)
+![BUG-002](../evidencias/BUG-002.png)
 
 ---
 
@@ -154,7 +154,7 @@ Never insert user-provided data directly into `innerHTML`. Either escape the tex
 - **Layer:** Back-end
 - **Test type:** Black-box (just try odd email values and see if registration accepts them)
 - **Category:** Functional
-- **Evidence in code:** [server/routes/auth.js:7](server/routes/auth.js#L7) — `const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;`. This rule only requires "something, at sign, something, dot, something", without checking whether the part after the dot is a real TLD, with no length limit, and even accepting a purely numeric TLD.
+- **Evidence in code:** [server/routes/auth.js:7](../server/routes/auth.js#L7) — `const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;`. This rule only requires "something, at sign, something, dot, something", without checking whether the part after the dot is a real TLD, with no length limit, and even accepting a purely numeric TLD.
 
 ### Steps to reproduce
 1. On the MedAlert home screen, click **"Sign up"**.
@@ -179,12 +179,12 @@ In other words, the header **was actually rendered**, confirming the login worke
 
 ### What was tested and is **not** a bug (validations that work correctly)
 - **Duplicate full name:** accepted — shouldn't be blocked anyway, a person's name isn't a unique identifier.
-- **Email already registered:** correctly rejected (`409 An account with this email already exists`) — [server/routes/auth.js:56-57](server/routes/auth.js#L56-L57).
-- **Password ≠ Confirm password:** correctly rejected (`400`) — [server/routes/auth.js:54](server/routes/auth.js#L54).
+- **Email already registered:** correctly rejected (`409 An account with this email already exists`) — [server/routes/auth.js:56-57](../server/routes/auth.js#L56-L57).
+- **Password ≠ Confirm password:** correctly rejected (`400`) — [server/routes/auth.js:54](../server/routes/auth.js#L54).
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-![BUG-003](evidencias/BUG-003.png)
+![BUG-003](../evidencias/BUG-003.png)
 
 ---
 
@@ -195,9 +195,9 @@ In other words, the header **was actually rendered**, confirming the login worke
 - **Test type:** Black-box (just test name/email/password with emoji and see if registration accepts them)
 - **Category:** Functional
 - **Evidence in code:**
-  - Name: [server/routes/auth.js:50](server/routes/auth.js#L50) only checks `!name || !name.trim()` — accepts any character, including emoji.
-  - Email: [server/routes/auth.js:7](server/routes/auth.js#L7) — the same `EMAIL_RE` from BUG-003 (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`) doesn't exclude emoji, only blocks spaces and `@`; any other Unicode character (including emoji) passes.
-  - Password: [server/routes/auth.js:53](server/routes/auth.js#L53) only checks `password.length < 6` — doesn't validate character type, only quantity. Since emoji outside the Unicode basic plane (e.g., 🫶) take up 2 positions in JavaScript's `length`, a few emoji are enough to "fill" the minimum of 6. For the same reason, a password of **6 blank spaces** (`"      "`) is also accepted — `length` is 6, it doesn't matter that it's all invisible.
+  - Name: [server/routes/auth.js:50](../server/routes/auth.js#L50) only checks `!name || !name.trim()` — accepts any character, including emoji.
+  - Email: [server/routes/auth.js:7](../server/routes/auth.js#L7) — the same `EMAIL_RE` from BUG-003 (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`) doesn't exclude emoji, only blocks spaces and `@`; any other Unicode character (including emoji) passes.
+  - Password: [server/routes/auth.js:53](../server/routes/auth.js#L53) only checks `password.length < 6` — doesn't validate character type, only quantity. Since emoji outside the Unicode basic plane (e.g., 🫶) take up 2 positions in JavaScript's `length`, a few emoji are enough to "fill" the minimum of 6. For the same reason, a password of **6 blank spaces** (`"      "`) is also accepted — `length` is 6, it doesn't matter that it's all invisible.
 
 ### Steps to reproduce
 1. On the MedAlert home screen, click **"Sign up"**.
@@ -226,12 +226,12 @@ That ~4s delay before failing is expected (Cypress waiting out the default timeo
 Beyond not making sense as registration data (no email provider accepts `🫶@🫶.com`), this kind of unsanitized input is a bigger warning sign — and it's not just theoretical in this project: the name field **is** reused without escaping on multiple screens (see **BUG-002**, stored XSS using this exact same registration field).
 
 ### Other tests done on the registration screen that **didn't** find a bug (validations that work)
-- **Invalid "role" sent directly to the API** — sending `"role":"admin"` (outside the `<select>` options) is correctly rejected with `400 { "error": "Invalid role." }` — [server/routes/auth.js:52](server/routes/auth.js#L52).
+- **Invalid "role" sent directly to the API** — sending `"role":"admin"` (outside the `<select>` options) is correctly rejected with `400 { "error": "Invalid role." }` — [server/routes/auth.js:52](../server/routes/auth.js#L52).
 - **SQL injection in the name field** — tested with `Test'; DROP TABLE users; --` in the Full name field. The `users` table was not affected; the text was stored safely, as a literal string (not as a SQL command). This happens because the project uses `better-sqlite3` *prepared statements* (`db.prepare(...).run(...)` with `?` as a placeholder) instead of manually concatenating SQL strings — this is the correct way to prevent SQL Injection, and it's done correctly throughout the project.
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-![BUG-004](evidencias/BUG-004.png)
+![BUG-004](../evidencias/BUG-004.png)
 
 ---
 
@@ -244,7 +244,7 @@ Beyond not making sense as registration data (no email provider accepts `🫶@�
 - **Test type:** Black-box (just try logging in with the wrong password and see if it's accepted)
 - **Category:** Security
 - **Module:** Login (`POST /api/auth/login`)
-- **Evidence in code:** [server/routes/auth.js:31](server/routes/auth.js#L31) — the only validation that exists is `if (!password || password.length === 0)`, meaning the backend only rejects an **empty** password. Aside from that, **there is no comparison at all** against `user.password` (the real password stored in the database) anywhere else in the file.
+- **Evidence in code:** [server/routes/auth.js:31](../server/routes/auth.js#L31) — the only validation that exists is `if (!password || password.length === 0)`, meaning the backend only rejects an **empty** password. Aside from that, **there is no comparison at all** against `user.password` (the real password stored in the database) anywhere else in the file.
 - **Important:** it's not "no validation at all" — there technically is a validation (requires at least 1 character, rejects an empty string). The bug is that this is the **only** check: the password is never actually compared against the correct one.
 
 ### Steps to reproduce
@@ -286,7 +286,7 @@ That ~4s delay before failing is expected, not a hang or a script error — it's
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-![BUG-005](evidencias/BUG-005.png)
+![BUG-005](../evidencias/BUG-005.png)
 
 ---
 
@@ -296,7 +296,7 @@ That ~4s delay before failing is expected, not a hang or a script error — it's
 - **Layer:** Back-end
 - **Test type:** Gray-box (the route isn't linked from any button on screen — only visible by opening the Console/DevTools and watching network requests, or by typing the address directly)
 - **Category:** Security
-- **Evidence in code:** [server/routes/auth.js:9-15](server/routes/auth.js#L9-L15) — a public route, with no `requireAuth`, returns the name, role, and email of every user (doctors, nurses, **and patients**).
+- **Evidence in code:** [server/routes/auth.js:9-15](../server/routes/auth.js#L9-L15) — a public route, with no `requireAuth`, returns the name, role, and email of every user (doctors, nurses, **and patients**).
 - **Different from the other bugs on this list: this is an intentional design decision, not an implementation error.** The code comment itself says the route exists "to populate a quick login selector on the front-end" and that it's "not a security problem on its own" — it's a business rule from the training version of the app (letting you pick a user from a dropdown instead of typing an email), not a coding bug like BUG-005, BUG-008, or BUG-018.
 
 ### How to test (step-by-step)
@@ -315,7 +315,7 @@ In a production version, the login selector shouldn't expose email addresses or 
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-![BUG-006](evidencias/BUG-006.png)
+![BUG-006](../evidencias/BUG-006.png)
 
 ---
 
@@ -325,7 +325,7 @@ In a production version, the login selector shouldn't expose email addresses or 
 - **Layer:** Back-end
 - **Test type:** Black-box (the "Reset system data" link is visible right on the login screen)
 - **Category:** Security
-- **Evidence in code:** [server/index.js:35-38](server/index.js#L35-L38) — `POST /api/admin/reset` calls `seedDatabase()` (which **wipes everything**: users, patients, vitals, alerts, prescriptions) and doesn't go through `requireAuth`. The code comment itself says it's intentional, "for the class," but from a QA standpoint it's a real flaw: anyone, logged in or not, can wipe the production database with a single request.
+- **Evidence in code:** [server/index.js:35-38](../server/index.js#L35-L38) — `POST /api/admin/reset` calls `seedDatabase()` (which **wipes everything**: users, patients, vitals, alerts, prescriptions) and doesn't go through `requireAuth`. The code comment itself says it's intentional, "for the class," but from a QA standpoint it's a real flaw: anyone, logged in or not, can wipe the production database with a single request.
 
 ### How to test (step-by-step)
 1. Open MedAlert **without logging in** (stay on the home screen).
@@ -340,7 +340,7 @@ Destructive endpoints shouldn't exist without authentication/administrator autho
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-![BUG-007](evidencias/BUG-007.png)
+![BUG-007](../evidencias/BUG-007.png)
 
 ---
 
@@ -352,7 +352,7 @@ Destructive endpoints shouldn't exist without authentication/administrator autho
 - **Layer:** Back-end
 - **Test type:** Gray-box (the normal screen doesn't let you see another patient's record — only found by changing the ID directly in the URL/Console)
 - **Category:** Security
-- **Evidence in code:** [server/routes/patients.js:32-47](server/routes/patients.js#L32-L47) — `GET /api/patients/:id` only requires `requireAuth`, never checks whether the logged-in user (doctor, nurse, or even the patient themselves) has any relationship with the requested `:id`.
+- **Evidence in code:** [server/routes/patients.js:32-47](../server/routes/patients.js#L32-L47) — `GET /api/patients/:id` only requires `requireAuth`, never checks whether the logged-in user (doctor, nurse, or even the patient themselves) has any relationship with the requested `:id`.
 
 ### Steps to reproduce
 1. On the home screen, in the **"User"** field select `Marina Souza — Patient`, in the **"Password"** field type anything (e.g., `x`), click **"Log in"**.
@@ -370,7 +370,7 @@ Logged in as **Marina Souza** (pac1, Patient role), the normal screen (`GET /api
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-![BUG-008](evidencias/BUG-008.png)
+![BUG-008](../evidencias/BUG-008.png)
 
 ---
 
@@ -383,11 +383,11 @@ Logged in as **Marina Souza** (pac1, Patient role), the normal screen (`GET /api
 - **Test type:** Black-box (just record a normal Fahrenheit temperature and see if it triggers an improper alert)
 - **Category:** Functional
 - **Evidence (Front-end):**
-  - Labels the temperature field as **°F** both in the nursing vital-signs form ([public/app.js:322](public/app.js#L322)) and in the patient's own view ([public/app.js:219](public/app.js#L219)), as well as in the doctor's history view.
-  - But the doctor's thresholds screen labels the same field as **°C** ([public/app.js:500](public/app.js#L500)) — an inconsistency between the front-end's own screens.
+  - Labels the temperature field as **°F** both in the nursing vital-signs form ([public/app.js:322](../public/app.js#L322)) and in the patient's own view ([public/app.js:219](../public/app.js#L219)), as well as in the doctor's history view.
+  - But the doctor's thresholds screen labels the same field as **°C** ([public/app.js:500](../public/app.js#L500)) — an inconsistency between the front-end's own screens.
 - **Evidence (Back-end):**
-  - The seeded data/default threshold (`temp_high: 37.8`, readings like `36.6`, `37.1`) only make sense as **Celsius** — [server/lib/seed.js:44](server/lib/seed.js#L44).
-  - The alert rule ([server/lib/rules.js:19](server/lib/rules.js#L19)) compares the raw entered value against that threshold, with no unit conversion at all.
+  - The seeded data/default threshold (`temp_high: 37.8`, readings like `36.6`, `37.1`) only make sense as **Celsius** — [server/lib/seed.js:44](../server/lib/seed.js#L44).
+  - The alert rule ([server/lib/rules.js:19](../server/lib/rules.js#L19)) compares the raw entered value against that threshold, with no unit conversion at all.
 
 ### How to test (step-by-step)
 1. Log in as a nurse: user `Camila Duarte — Nurse`, any password (e.g., `x`).
@@ -407,7 +407,7 @@ The system's standard unit should be **°C**, not °F. The "°F" label is likely
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-![BUG-009](evidencias/BUG-009.png)
+![BUG-009](../evidencias/BUG-009.png)
 
 ---
 
@@ -417,8 +417,8 @@ The system's standard unit should be **°C**, not °F. The "°F" label is likely
 - **Layer:** Front-end + Back-end
 - **Test type:** Black-box (just test an impossible value, like a negative heart rate)
 - **Category:** Functional
-- **Evidence (Front-end):** [public/app.js:377](public/app.js#L377) — the nursing vital-signs form doesn't validate any range before submitting (the code's own comment already points this out).
-- **Evidence (Back-end):** [server/routes/patients.js:51-64](server/routes/patients.js#L51-L64) only runs `Number(...)` on the received values, with no check against plausible physical limits — even if the front-end eventually validates, the API would accept any value coming straight from outside.
+- **Evidence (Front-end):** [public/app.js:377](../public/app.js#L377) — the nursing vital-signs form doesn't validate any range before submitting (the code's own comment already points this out).
+- **Evidence (Back-end):** [server/routes/patients.js:51-64](../server/routes/patients.js#L51-L64) only runs `Number(...)` on the received values, with no check against plausible physical limits — even if the front-end eventually validates, the API would accept any value coming straight from outside.
 
 ### How to test (step-by-step)
 1. Log in as `Camila Duarte — Nurse`, any password.
@@ -437,7 +437,7 @@ Physiologically plausible range validation both on the front-end (immediate user
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-![BUG-010](evidencias/BUG-010.png)
+![BUG-010](../evidencias/BUG-010.png)
 
 ---
 
@@ -447,7 +447,7 @@ Physiologically plausible range validation both on the front-end (immediate user
 - **Layer:** Back-end
 - **Test type:** Black-box (boundary-value testing — recording exactly the threshold number is a classic QA technique, no code reading required; only the exact cause, `">"` instead of `">="`, came from reading the code afterward)
 - **Category:** Functional
-- **Evidence in code:** [server/lib/rules.js:16](server/lib/rules.js#L16) — the spec says "HR ≥ 100 triggers a HIGH alert," but the implementation uses `v.hr > patient.hr_high`.
+- **Evidence in code:** [server/lib/rules.js:16](../server/lib/rules.js#L16) — the spec says "HR ≥ 100 triggers a HIGH alert," but the implementation uses `v.hr > patient.hr_high`.
 
 ### How to test (step-by-step)
 1. Log in as `Camila Duarte — Nurse`, any password.
@@ -463,7 +463,7 @@ A reading with HR exactly equal to the threshold (e.g., 100 when `hr_high = 100`
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-🎥 Evidence video: [BUG-011](evidencias/pt/BUG-011/video-1.mp4)
+🎥 Evidence video: [BUG-011](../evidencias/pt/BUG-011/video-1.mp4)
 
 ---
 
@@ -473,7 +473,7 @@ A reading with HR exactly equal to the threshold (e.g., 100 when `hr_high = 100`
 - **Layer:** Back-end
 - **Test type:** Black-box (just record the same signal twice and see if it duplicates in the list)
 - **Category:** Functional
-- **Evidence in code:** [server/lib/rules.js:22-24](server/lib/rules.js#L22-L24) — no duplicate/"cooldown" check at all; every time recorded vitals exceed the threshold, a new alert is created, even if an identical one is already pending for the same condition.
+- **Evidence in code:** [server/lib/rules.js:22-24](../server/lib/rules.js#L22-L24) — no duplicate/"cooldown" check at all; every time recorded vitals exceed the threshold, a new alert is created, even if an identical one is already pending for the same condition.
 
 ### Steps to reproduce
 1. Log in as `Camila Duarte — Nurse` (`camila@medalert.test`, any password), select patient Marina Souza, and record vital signs outside the normal range (e.g., HR = 110, above the 100 threshold).
@@ -491,7 +491,7 @@ The minimal fix is simply for the back-end not to insert the repeated alert. As 
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-🎥 Evidence video: [BUG-012](evidencias/pt/BUG-012/video-1.mp4)
+🎥 Evidence video: [BUG-012](../evidencias/pt/BUG-012/video-1.mp4)
 
 ---
 
@@ -503,8 +503,8 @@ The minimal fix is simply for the back-end not to insert the repeated alert. As 
 - **Layer:** Back-end
 - **Test type:** White-box (the symptom — an alert that doesn't self-escalate — can only be 100% confirmed by reading the code and seeing the function exists but is never called; from the screen alone, it would look odd but couldn't be proven to be an intentional bug rather than just "not enough time has passed yet")
 - **Category:** Functional
-- **Evidence in code:** [server/lib/rules.js:32-41](server/lib/rules.js#L32-L41) — `checkAutoEscalation()` implements the rule ("a critical alert pending for more than 15 minutes should self-escalate"), but the function **is never called from any route or any scheduler** (`setInterval`, etc.) — dead code.
-- The seed data in [server/lib/seed.js:65](server/lib/seed.js#L65) deliberately creates a critical alert that's already 35 minutes old (> 15 min) to prove it **never** changes status on its own.
+- **Evidence in code:** [server/lib/rules.js:32-41](../server/lib/rules.js#L32-L41) — `checkAutoEscalation()` implements the rule ("a critical alert pending for more than 15 minutes should self-escalate"), but the function **is never called from any route or any scheduler** (`setInterval`, etc.) — dead code.
+- The seed data in [server/lib/seed.js:65](../server/lib/seed.js#L65) deliberately creates a critical alert that's already 35 minutes old (> 15 min) to prove it **never** changes status on its own.
 
 ### How to test (step-by-step)
 1. Click **"Reset system data"** (this recreates Roberto's critical alert already "pretending" to be 35 minutes old — no need to actually wait any real time).
@@ -522,7 +522,7 @@ Critical ("critica") alerts pending for more than 15 minutes should automaticall
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-![BUG-013](evidencias/BUG-013.png)
+![BUG-013](../evidencias/BUG-013.png)
 
 ---
 
@@ -532,7 +532,7 @@ Critical ("critica") alerts pending for more than 15 minutes should automaticall
 - **Layer:** Back-end
 - **Test type:** Gray-box (the screen doesn't show who acknowledged it first — the overwrite is only discovered by looking at the raw API response in the Console/DevTools before and after the 2nd click)
 - **Category:** Data integrity
-- **Evidence in code:** [server/routes/alerts.js:9-18](server/routes/alerts.js#L9-L18) — `POST /:id/acknowledge` doesn't check the current `status` before overwriting `acknowledged_at`/`acknowledged_by`.
+- **Evidence in code:** [server/routes/alerts.js:9-18](../server/routes/alerts.js#L9-L18) — `POST /:id/acknowledge` doesn't check the current `status` before overwriting `acknowledged_at`/`acknowledged_by`.
 
 ### Steps to reproduce
 1. Log in as a **nurse**: `Camila Duarte — Nurse` (`camila@medalert.test`, any password). The "Acknowledge" button only exists on the nurse's screen; it doesn't appear for the doctor or the patient.
@@ -548,7 +548,7 @@ When trying to acknowledge an alert that's already `acknowledged`, the system sh
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-🎥 Evidence video: [BUG-014](evidencias/pt/BUG-014/video-1.mp4)
+🎥 Evidence video: [BUG-014](../evidencias/pt/BUG-014/video-1.mp4)
 
 ---
 
@@ -559,8 +559,8 @@ When trying to acknowledge an alert that's already `acknowledged`, the system sh
 - **Test type:** Gray-box (had to compare the API response at each step of the sequence to see the `acknowledgedBy`/`acknowledgedAt` fields misbehaving)
 - **Category:** Data integrity
 - **Evidence in code:**
-  - `POST /:id/acknowledge` ([server/routes/alerts.js:9-18](server/routes/alerts.js#L9-L18)) sets `status='acknowledged'` without checking whether the current status is `escalated`.
-  - `POST /:id/escalate` ([server/routes/alerts.js:20-26](server/routes/alerts.js#L20-L26)) sets `status='escalated'` without checking the current status, and **never clears** `acknowledged_at`/`acknowledged_by`.
+  - `POST /:id/acknowledge` ([server/routes/alerts.js:9-18](../server/routes/alerts.js#L9-L18)) sets `status='acknowledged'` without checking whether the current status is `escalated`.
+  - `POST /:id/escalate` ([server/routes/alerts.js:20-26](../server/routes/alerts.js#L20-L26)) sets `status='escalated'` without checking the current status, and **never clears** `acknowledged_at`/`acknowledged_by`.
   - The two routes have no notion of each other at all — there's no state machine (`pending → acknowledged → escalated`, with allowed/forbidden transitions), so any button can be clicked at any time, in any order.
 
 ### How to test (step-by-step)
@@ -594,7 +594,7 @@ BUG-014 is about acknowledging the **same status** twice (loses who acknowledged
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-🎥 Evidence video: [BUG-015](evidencias/en/BUG-015/video-1.mp4)
+🎥 Evidence video: [BUG-015](../evidencias/en/BUG-015/video-1.mp4)
 
 ---
 
@@ -604,7 +604,7 @@ BUG-014 is about acknowledging the **same status** twice (loses who acknowledged
 - **Layer:** Front-end
 - **Test type:** Black-box (just observe the number at the top of the screen before/after a new alert)
 - **Category:** Usability (UX)
-- **Evidence in code:** [public/app.js:285-298](public/app.js#L285-L298) — `countPendingForMyPatients()` is only recalculated when the entire page is re-rendered (login, switching patients), not after acknowledging/escalating an alert or recording new vital signs within the same screen.
+- **Evidence in code:** [public/app.js:285-298](../public/app.js#L285-L298) — `countPendingForMyPatients()` is only recalculated when the entire page is re-rendered (login, switching patients), not after acknowledging/escalating an alert or recording new vital signs within the same screen.
 
 ### How to test (step-by-step)
 1. Log in as `Camila Duarte — Nurse`, any password.
@@ -620,7 +620,7 @@ A nurse acknowledges the only pending alert for a patient, but the "Pending aler
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-🎥 Evidence video: [BUG-016](evidencias/en/BUG-016/video-1.mp4)
+🎥 Evidence video: [BUG-016](../evidencias/en/BUG-016/video-1.mp4)
 
 ---
 
@@ -630,7 +630,7 @@ A nurse acknowledges the only pending alert for a patient, but the "Pending aler
 - **Layer:** Front-end
 - **Test type:** Black-box (just click "Acknowledge" and see that it asks nothing)
 - **Category:** Usability (UX)
-- **Evidence in code:** [public/app.js:383-389](public/app.js#L383-L389) — the "Acknowledge" button's `onclick` calls `api.acknowledge(...)` directly, with no `confirm()` or modal. The "Escalate to doctor" button right next to it (lines 390-396) has the exact same problem.
+- **Evidence in code:** [public/app.js:383-389](../public/app.js#L383-L389) — the "Acknowledge" button's `onclick` calls `api.acknowledge(...)` directly, with no `confirm()` or modal. The "Escalate to doctor" button right next to it (lines 390-396) has the exact same problem.
 
 ### How to test (step-by-step)
 1. Log in as `Camila Duarte — Nurse`, any password.
@@ -651,7 +651,7 @@ Combined with **BUG-014** (acknowledging an already-acknowledged alert overwrite
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-🎥 Evidence video: [BUG-017](evidencias/en/BUG-017/video-1.mp4)
+🎥 Evidence video: [BUG-017](../evidencias/en/BUG-017/video-1.mp4)
 
 ---
 
@@ -663,7 +663,7 @@ Combined with **BUG-014** (acknowledging an already-acknowledged alert overwrite
 - **Layer:** Back-end
 - **Test type:** Gray-box (these actions have no button for a regular patient on screen — can only be triggered by calling the API directly through the Console/DevTools)
 - **Category:** Security
-- **Evidence in code:** the same missing relationship check in [server/routes/patients.js](server/routes/patients.js) across these routes:
+- **Evidence in code:** the same missing relationship check in [server/routes/patients.js](../server/routes/patients.js) across these routes:
   - `POST /:id/vitals` (line 51)
   - `PUT /:id/thresholds` (line 66)
   - `POST /:id/prescriptions` (line 82)
@@ -719,8 +719,8 @@ _No evidence (screenshot/video) attached yet._
 - **Layer:** Front-end + Back-end
 - **Test type:** Black-box (just log in as a doctor with no patients and try to use the Prescription tab)
 - **Category:** Functional
-- **Evidence (Front-end):** the doctor's "Prescription" tab remains accessible even when `d === null` (no patient selected) — [public/app.js:439-440](public/app.js#L439-L440) — and the submit still calls the API anyway, with `selectedPatientId || 'undefined'` — [public/app.js:568](public/app.js#L568).
-- **Evidence (Back-end):** `POST /:id/prescriptions` only saves if the patient exists, but responds `201 { ok: true, message: 'Prescription saved successfully.' }` even when there's no valid `:id`, with no `else` branch returning an error — [server/routes/patients.js:82-93](server/routes/patients.js#L82-L93).
+- **Evidence (Front-end):** the doctor's "Prescription" tab remains accessible even when `d === null` (no patient selected) — [public/app.js:439-440](../public/app.js#L439-L440) — and the submit still calls the API anyway, with `selectedPatientId || 'undefined'` — [public/app.js:568](../public/app.js#L568).
+- **Evidence (Back-end):** `POST /:id/prescriptions` only saves if the patient exists, but responds `201 { ok: true, message: 'Prescription saved successfully.' }` even when there's no valid `:id`, with no `else` branch returning an error — [server/routes/patients.js:82-93](../server/routes/patients.js#L82-L93).
 
 ### How to test (step-by-step)
 1. Register a new doctor account (on the "Sign up" screen, "Doctor" role, any name/email) — since it's a newly created doctor, they have no patients linked yet.
@@ -740,7 +740,7 @@ The front-end shouldn't allow opening/submitting the form without a selected pat
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-🎥 Evidence video: [BUG-019](evidencias/en/BUG-019/video-1.mp4)
+🎥 Evidence video: [BUG-019](../evidencias/en/BUG-019/video-1.mp4)
 
 ---
 
@@ -750,7 +750,7 @@ The front-end shouldn't allow opening/submitting the form without a selected pat
 - **Layer:** Front-end
 - **Test type:** Black-box (just click "Discharge" and see that it asks nothing)
 - **Category:** Usability (UX)
-- **Evidence in code:** [public/app.js:532-540](public/app.js#L532-L540) — the "Discharge patient" button calls the API directly on `onclick`, with no `confirm()` or modal (unlike the "Reset system data" link, which does confirm — [public/app.js:150-157](public/app.js#L150-L157)).
+- **Evidence in code:** [public/app.js:532-540](../public/app.js#L532-L540) — the "Discharge patient" button calls the API directly on `onclick`, with no `confirm()` or modal (unlike the "Reset system data" link, which does confirm — [public/app.js:150-157](../public/app.js#L150-L157)).
 
 ### How to test (step-by-step)
 1. Log in as `Dr. Helena Prado — Doctor`, any password.
@@ -765,7 +765,7 @@ A single, accidental click already finalizes the patient's discharge, with no ch
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-🎥 Evidence video: [BUG-020](evidencias/en/BUG-020/video-1.mp4)
+🎥 Evidence video: [BUG-020](../evidencias/en/BUG-020/video-1.mp4)
 
 ---
 
@@ -776,8 +776,8 @@ A single, accidental click already finalizes the patient's discharge, with no ch
 - **Test type:** Black-box (just compare the button's color before/after the discharge)
 - **Category:** Visual
 - **Evidence in code:**
-  - [public/app.js:459](public/app.js#L459) — the button correctly receives the `disabled` attribute when `d.patient.status === 'discharged'` (`${d.patient.status === 'alta' ? 'disabled' : ''}`), so it **functionally** stops responding to clicks after discharge — this part already works correctly.
-  - The problem is visual: in [public/styles.css](public/styles.css) there's **no `:disabled` rule at all** — `.btn-danger` (line 26) always applies the same solid red, and the global `button{cursor:pointer}` rule (line 22) is also never overridden for the disabled state.
+  - [public/app.js:459](../public/app.js#L459) — the button correctly receives the `disabled` attribute when `d.patient.status === 'discharged'` (`${d.patient.status === 'alta' ? 'disabled' : ''}`), so it **functionally** stops responding to clicks after discharge — this part already works correctly.
+  - The problem is visual: in [public/styles.css](../public/styles.css) there's **no `:disabled` rule at all** — `.btn-danger` (line 26) always applies the same solid red, and the global `button{cursor:pointer}` rule (line 22) is also never overridden for the disabled state.
 
 ### How to test (step-by-step)
 1. Log in as `Dr. Helena Prado — Doctor`, any password, and select a patient.
@@ -796,10 +796,10 @@ After the discharge, the button should give some clear visual signal: turn gray/
 
 ### Evidence (screenshot)
 <!-- Paste screenshot(s) for this bug here -->
-🎥 Evidence video: [BUG-021](evidencias/en/BUG-021/video-1.mp4)
+🎥 Evidence video: [BUG-021](../evidencias/en/BUG-021/video-1.mp4)
 
 ---
 
 ## Additional observations (not classified as standalone bugs)
-- Every newly self-registered patient is always linked to the **first** nurse and the **first** doctor registered in the database (`LIMIT 1`, with no distribution criteria at all) — see [server/routes/auth.js:63-65](server/routes/auth.js#L63-L65) (Back-end). Not a runtime error, but a naive assignment rule worth mentioning in the presentation. (See also [FEATURES.md](FEATURES.md) — patient reassignment feature suggestion.)
+- Every newly self-registered patient is always linked to the **first** nurse and the **first** doctor registered in the database (`LIMIT 1`, with no distribution criteria at all) — see [server/routes/auth.js:63-65](../server/routes/auth.js#L63-L65) (Back-end). Not a runtime error, but a naive assignment rule worth mentioning in the presentation. (See also [FEATURES.md](../FEATURES.md) — patient reassignment feature suggestion.)
 - Patient registration doesn't collect age or bed number — they stay `null`/`—` until someone edits them directly in the database (Front-end, there's no screen for this).

@@ -1,8 +1,8 @@
 # MedAlert — Test Automation (Cypress)
 
-> This is the English version of [README.md](README.md), prepared as a final deliverable. The Portuguese version remains the working copy; this one is a faithful translation, kept in sync manually.
+> This is the English version of [README.md](../README.md), prepared as a final deliverable. The Portuguese version remains the working copy; this one is a faithful translation, kept in sync manually.
 
-This README explains how to run the automated suite and where to find the evidence (videos/screenshots) for each test. See also [BUGS_EN.md](BUGS_EN.md) (full bug log), [FEATURES_EN.md](FEATURES_EN.md) (feature suggestions), [PROJECT_BRIEF.md](PROJECT_BRIEF.md), [TEST_PLAN.md](TEST_PLAN.md), and [TEST_CASES.md](TEST_CASES.md).
+This README explains how to run the automated suite and where to find the evidence (videos/screenshots) for each test. See also [BUGS_EN.md](BUGS_EN.md) (full bug log), [FEATURES_EN.md](FEATURES_EN.md) (feature suggestions), [PROJECT_BRIEF_EN.md](PROJECT_BRIEF_EN.md), [TEST_PLAN_EN.md](TEST_PLAN_EN.md), and [TEST_CASES_EN.md](TEST_CASES_EN.md). For a one-page condensed version of Brief + Test Plan + Test Cases, see [SUMMARY_EN.md](SUMMARY_EN.md). For the full content of Brief + Test Plan + Test Cases + Feature Suggestions merged into a single file (presentation order, no screen-switching needed), see [PRESENTATION_LAST.md](PRESENTATION_LAST.md). For the timed script used in the final presentation, see [PRESENTATION_GUIDE_EN.md](PRESENTATION_GUIDE_EN.md) (or the [live version](<../site/presenter-guide.html>) with a running timer, meant for a second monitor).
 
 ## Prerequisites
 - Node.js installed.
@@ -38,7 +38,7 @@ npx cypress open
 
 ## What to expect from the result
 
-The suite has **29 tests**: **6 pass** (proving correct flows actually work) and **23 fail on purpose** (each failure is the automated proof of a real bug, documented in [BUGS_EN.md](BUGS_EN.md)). This is the expected, correct result — the suite is not "broken". See the full philosophy in [TEST_PLAN.md](TEST_PLAN.md), "Entry and exit criteria" section.
+The suite has **29 tests**: **6 pass** (proving correct flows actually work) and **23 fail on purpose** (each failure is the automated proof of a real bug, documented in [BUGS_EN.md](BUGS_EN.md)). This is the expected, correct result — the suite is not "broken". See the full philosophy in [TEST_PLAN_EN.md](TEST_PLAN_EN.md), "Entry and exit criteria" section.
 
 ## Adjusting the recording speed (optional)
 
@@ -47,7 +47,7 @@ Tests run with a configurable "slow motion" mode, to stay legible on video/in a 
 npx cypress run --env SLOWDOWN_MS=1200   # slower
 npx cypress run --env SLOWDOWN_MS=0      # turn off slow motion
 ```
-Configured in [cypress/support/e2e.js](cypress/support/e2e.js).
+Configured in [cypress/support/e2e.js](../cypress/support/e2e.js).
 
 ## Where the evidence lives
 - **Videos:** `cypress/videos/<category>/<test>.cy.js.mp4` — one per test, across the 6 folders below.
@@ -64,7 +64,7 @@ Configured in [cypress/support/e2e.js](cypress/support/e2e.js).
 | `cypress/e2e/gestao-alertas/` | 5 | Nurse | Acknowledging/escalating alerts |
 | `cypress/e2e/medico/` | 3 | Doctor | Thresholds, prescription, patient discharge |
 
-Full breakdown of each case in [TEST_CASES.md](TEST_CASES.md).
+Full breakdown of each case in [TEST_CASES_EN.md](TEST_CASES_EN.md).
 
 ## Last execution report
 
@@ -110,20 +110,20 @@ Videos:     29/29 generated successfully in cypress/videos/
 
 ## CI/CD (GitHub Actions)
 
-The [.github/workflows/cypress.yml](.github/workflows/cypress.yml) workflow runs the suite automatically on every push/PR to `main`, split into 2 jobs:
+The [.github/workflows/cypress.yml](../.github/workflows/cypress.yml) workflow runs the suite automatically on every push/PR to `main`, split into 2 jobs:
 - **`happy-path`** — runs only the 6 tests that should pass. This is the only job that gates the pipeline (a red check here means something actually broke).
 - **`bug-suite`** — runs the other 23 bug-proving tests. Configured with `continue-on-error`, so it can fail freely without bringing the pipeline down — every failure here is the expected result, not an infrastructure error. Videos/screenshots are uploaded as an artifact of that run, under Actions.
 - **`k6-smoke`** — runs the k6 `smoke` scenario on every push, also informational (`continue-on-error`). Performance thresholds on a shared GitHub runner vary with noisy-neighbor load, so this never gates the pipeline — it's a lightweight regression check, not a release gate.
 
 ## Other tools in the project
-- **Postman:** [MedAlert_EN.postman_collection.json](MedAlert_EN.postman_collection.json) (or [MedAlert.postman_collection.json](MedAlert.postman_collection.json) in Portuguese) — import into Postman to test the routes manually.
+- **Postman:** [MedAlert_EN.postman_collection.json](../MedAlert_EN.postman_collection.json) (or [MedAlert.postman_collection.json](../MedAlert.postman_collection.json) in Portuguese) — import into Postman to test the routes manually.
 - **k6 (load test):**
   ```bash
   k6 run k6/load-test.js                        # load (default) — gradual ramp, normal usage
   k6 run --env SCENARIO=smoke k6/load-test.js   # smoke — 1 user, 30s, just confirms it works
   k6 run --env SCENARIO=spike k6/load-test.js   # spike — abrupt burst of 100 users
   ```
-  Stress/breakpoint/soak scenarios exist in k6 but were deliberately left out (risk of taking down the local presentation server, or requiring hours to run) — see the comment at the top of [k6/load-test.js](k6/load-test.js).
+  Stress/breakpoint/soak scenarios exist in k6 but were deliberately left out (risk of taking down the local presentation server, or requiring hours to run) — see the comment at the top of [k6/load-test.js](../k6/load-test.js).
 
   #### What p95/p99 means (and why not just use the average)
 
@@ -141,4 +141,4 @@ The [.github/workflows/cypress.yml](.github/workflows/cypress.yml) workflow runs
 
   **Reading the result:** all 3 scenarios closed with **0% errors** and latency well under target in every case — including `spike`, where the system took an abrupt jump from 5 to 100 concurrent users and kept responding in ~1ms, with no timeouts or failures. For this system, performance doesn't appear to be a real bottleneck risk — the serious problems found in this project are security and business-rule bugs (see [BUGS_EN.md](BUGS_EN.md)), not load capacity.
 - **Excel:** `BUGS.xlsx` — the same content as BUGS.md, in spreadsheet form.
-- **Interactive site:** published bug log with filtering, search, and evidence upload — [PT](https://claude.ai/artifact/2mYWCDe2fXeRkMBWaBjDFg) · [EN](https://claude.ai/artifact/M947KJzfsQZ6fRUeo6KMHQ). Source code in [site/](site/).
+- **Interactive site:** published bug log with filtering, search, and evidence upload — [PT](https://claude.ai/artifact/2mYWCDe2fXeRkMBWaBjDFg) · [EN](https://claude.ai/artifact/M947KJzfsQZ6fRUeo6KMHQ). Source code in [site/](../site/).

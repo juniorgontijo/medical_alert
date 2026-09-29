@@ -13,7 +13,7 @@ evidencias/
 └── en/BUG-XXX/video-N.mp4
 ```
 
-- **`evidencias/BUG-XXX.png`** (raiz): é a imagem que o [BUGS.md](../BUGS.md)/[BUGS_EN.md](../BUGS_EN.md) já embutem automaticamente (`![BUG-XXX](evidencias/BUG-XXX.png)`) — aparece direto ao abrir esses arquivos no GitHub ou no preview do VS Code. Só existe pros 11 bugs que têm pelo menos 1 print de verdade (BUG-001 a BUG-010, e BUG-013); preferência pro print do site em português quando os dois têm.
+- **`evidencias/BUG-XXX.png`** (raiz): é a imagem que o [BUGS.md](../BUGS.md)/[BUGS_EN.md](<../Apresentação MedAlert English/BUGS_EN.md>) já embutem automaticamente (`![BUG-XXX](evidencias/BUG-XXX.png)`) — aparece direto ao abrir esses arquivos no GitHub ou no preview do VS Code. Só existe pros 11 bugs que têm pelo menos 1 print de verdade (BUG-001 a BUG-010, e BUG-013); preferência pro print do site em português quando os dois têm.
 - **`pt/` e `en/`**: cópia completa de cada evidência anexada em cada site, sem perder nada (inclusive vídeos e prints extras que não cabem na convenção de "1 arquivo por bug").
 
 ## Bugs sem print (só vídeo, ou nada ainda)

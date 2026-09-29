@@ -1,9 +1,11 @@
 # MedAlert — Site interativo de triagem de bugs
 
-Código-fonte dos dois sites publicados (o mesmo conteúdo de [BUGS.md](../BUGS.md)/[BUGS_EN.md](../BUGS_EN.md), em formato de ficha de triagem navegável, com busca, filtro por severidade/tipo/categoria, e upload de evidência).
+Código-fonte dos dois sites publicados (o mesmo conteúdo de [BUGS.md](../BUGS.md)/[BUGS_EN.md](<../Apresentação MedAlert English/BUGS_EN.md>), em formato de ficha de triagem navegável, com busca, filtro por severidade/tipo/categoria, e upload de evidência).
 
 - **Português:** [triagem-medalert.html](triagem-medalert.html) — publicado em https://claude.ai/artifact/2mYWCDe2fXeRkMBWaBjDFg
 - **Inglês:** [medalert-triage-en.html](medalert-triage-en.html) — publicado em https://claude.ai/artifact/M947KJzfsQZ6fRUeo6KMHQ
+
+Também tem o **[presenter-guide.html](presenter-guide.html)** — guia de apresentação (run of show cronometrado, 15–20 min, cola de perguntas técnicas), pra abrir num segundo monitor durante a apresentação final. Publicado em https://claude.ai/artifact/E1Ji7mYqyguiAVZf516eeK. Conteúdo espelha [PRESENTATION_GUIDE_EN.md](<../Apresentação MedAlert English/PRESENTATION_GUIDE_EN.md>).
 
 ## Como abrir
 
